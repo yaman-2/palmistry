@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cosmic Insights - Astrology & Palmistry</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+
+    <div class="container" id="main-container">
+        <!-- Selection Screen -->
+        <div class="screen active" id="selection-screen">
+            <div class="logo-container">
+                <img src="logo.jpg" alt="Samudrika Logo" class="main-logo" onerror="this.style.display='none'">
+            </div>
+            <h1 class="glow-text">SAMUDRIKA</h1>
+            <p class="subtitle">Palmistry & Destiny Reading</p>
+            
+            <div class="card-container">
+                <div class="glass-card" onclick="selectPath('astrology')">
+                    <div class="icon">✨</div>
+                    <h2>Astrology</h2>
+                    <p>Unveil the cosmic blueprint of your life through the stars.</p>
+                </div>
+                <div class="glass-card" onclick="selectPath('palmistry')">
+                    <div class="icon">✋</div>
+                    <h2>Palmistry</h2>
+                    <p>Read the history and future written in the lines of your hands.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Astrology Form Screen -->
+        <div class="screen" id="astrology-screen">
+            <button class="back-btn" onclick="goBack()">← Back</button>
+            <h1 class="glow-text">Astrology Reading</h1>
+            
+            <form class="glass-form" id="astrology-form" onsubmit="submitAstrology(event)">
+                <div class="input-group">
+                    <label>Full Name</label>
+                    <input type="text" id="astro-name" required>
+                </div>
+                <div class="input-group">
+                    <label>Mobile No.</label>
+                    <input type="tel" id="astro-mobile" required>
+                </div>
+                <div class="input-group">
+                    <label>Email ID</label>
+                    <input type="email" id="astro-email" required>
+                </div>
+                <div class="input-group row">
+                    <div class="col">
+                        <label>Date of Birth</label>
+                        <input type="date" id="astro-dob" required>
+                    </div>
+                    <div class="col">
+                        <label>Time of Birth</label>
+                        <input type="time" id="astro-time" required>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Place of Birth (City, State)</label>
+                    <input type="text" id="astro-place" required>
+                </div>
+                <button type="submit" class="submit-btn">Continue to WhatsApp ➔</button>
+            </form>
+        </div>
+
+        <!-- Palmistry Form Screen -->
+        <div class="screen" id="palmistry-screen">
+            <button class="back-btn" onclick="goBack()">← Back</button>
+            <h1 class="glow-text">Palmistry Reading</h1>
+            
+            <form class="glass-form" id="palmistry-form" onsubmit="submitPalmistry(event)">
+                <div class="input-group">
+                    <label>Full Name</label>
+                    <input type="text" id="palm-name" required>
+                </div>
+                <div class="input-group">
+                    <label>Mobile No.</label>
+                    <input type="tel" id="palm-mobile" required>
+                </div>
+                <div class="input-group">
+                    <label>Email ID</label>
+                    <input type="email" id="palm-email" required>
+                </div>
+                <div class="input-group">
+                    <label>Are you a Leftie or Rightie?</label>
+                    <select id="palm-hand" required>
+                        <option value="" disabled selected>Select Handedness...</option>
+                        <option value="Leftie">Leftie</option>
+                        <option value="Rightie">Rightie</option>
+                    </select>
+                </div>
+                
+                <div class="info-box">
+                    <p>📸 <strong>Important:</strong> After clicking continue, you will be redirected to WhatsApp. Please attach <strong>4-5 clear photos of your palms from different angles</strong> in the chat.</p>
+                </div>
+
+                <button type="submit" class="submit-btn">Continue to WhatsApp ➔</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

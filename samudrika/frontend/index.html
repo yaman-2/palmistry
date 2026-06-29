@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Samudrika - Premium UI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Deep Space / Cosmic Background */
+        body {
+            background: radial-gradient(circle at 50% 50%, #0c1527 0%, #02040a 100%);
+        }
+        
+        /* 3D Temple Gold Frame */
+        .temple-border {
+            border: 2px solid #b47c2b;
+            box-shadow: 
+                0 0 30px rgba(180, 124, 43, 0.3), 
+                inset 0 0 40px rgba(180, 124, 43, 0.15),
+                0 20px 50px rgba(0,0,0,0.8);
+            background: linear-gradient(180deg, rgba(15,23,42,0.9) 0%, rgba(2,6,23,0.95) 100%);
+            backdrop-filter: blur(10px);
+        }
+
+        /* Metallic Gold Text */
+        .text-gold {
+            background: linear-gradient(to right, #fceabb, #f8b500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Vedic Clock Animations */
+        .vedic-ring-1 {
+            border: 1px solid rgba(248, 181, 0, 0.4);
+            animation: spin 30s linear infinite;
+        }
+        .vedic-ring-2 {
+            border: 2px dashed rgba(248, 181, 0, 0.6);
+            animation: spin-reverse 20s linear infinite;
+        }
+        .vedic-ring-3 {
+            border: 1px dotted rgba(248, 181, 0, 0.8);
+            animation: spin 40s linear infinite;
+        }
+
+        /* Mystical Hand Pulse */
+        .mystic-hand {
+            filter: drop-shadow(0 0 25px rgba(14, 165, 233, 0.9));
+            animation: pulse-glow 3s ease-in-out infinite;
+        }
+
+        @keyframes spin { 100% { transform: translate(-50%, -50%) rotate(360deg); } }
+        @keyframes spin-reverse { 100% { transform: translate(-50%, -50%) rotate(-360deg); } }
+        @keyframes pulse-glow {
+            0%, 100% { filter: drop-shadow(0 0 15px rgba(14, 165, 233, 0.6)); transform: translate(-50%, -50%) scale(1); }
+            50% { filter: drop-shadow(0 0 35px rgba(14, 165, 233, 1)); transform: translate(-50%, -50%) scale(1.05); }
+        }
+
+        /* 3D Button */
+        .btn-gold {
+            background: linear-gradient(135deg, #f5af19 0%, #f12711 100%);
+            box-shadow: 0 4px 15px rgba(241, 39, 17, 0.4), inset 0 2px 0 rgba(255,255,255,0.3);
+            transition: all 0.3s ease;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .btn-gold:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 5px rgba(241, 39, 17, 0.4), inset 0 2px 0 rgba(0,0,0,0.1);
+        }
+        .btn-gold:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin-fast 1s ease-in-out infinite;
+            position: absolute;
+            display: none;
+        }
+        @keyframes spin-fast {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Scrollbar for reading content */
+        .reading-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+        .reading-scroll::-webkit-scrollbar-thumb {
+            background-color: rgba(248, 181, 0, 0.5);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="text-white min-h-screen flex items-center justify-center font-sans p-4 antialiased">
+
+    <!-- Mobile Device Mockup Container -->
+    <div class="relative w-full max-w-[380px] h-[800px] rounded-[2.5rem] temple-border overflow-hidden flex flex-col items-center justify-between py-12 px-6">
+        
+        <!-- Header -->
+        <div class="text-center z-10 w-full mt-2">
+            <h1 class="text-4xl font-extrabold text-gold tracking-widest uppercase cursor-pointer" id="logoTitle">Samudrika</h1>
+            <p class="text-xs text-yellow-500 mt-2 font-medium tracking-wide uppercase">Ancient Wisdom • Modern Tech</p>
+        </div>
+
+        <!-- MAIN VIEW: Centerpiece: Clock & Hand -->
+        <div id="mainView" class="w-full flex flex-col items-center justify-between flex-1">
+            <div class="relative w-80 h-80 my-8">
+                <!-- Rotating Rings -->
+                <div class="absolute top-1/2 left-1/2 w-72 h-72 rounded-full vedic-ring-1 transform -translate-x-1/2 -translate-y-1/2"></div>
+                <div class="absolute top-1/2 left-1/2 w-56 h-56 rounded-full vedic-ring-2 transform -translate-x-1/2 -translate-y-1/2"></div>
+                <div class="absolute top-1/2 left-1/2 w-40 h-40 rounded-full vedic-ring-3 transform -translate-x-1/2 -translate-y-1/2"></div>
+                
+                <!-- Glowing Core -->
+                <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full bg-sky-500/10 blur-xl"></div>
+
+                <!-- Central Hand Icon -->
+                <div class="absolute top-1/2 left-1/2 mystic-hand text-7xl text-sky-300 pointer-events-none">
+                    ✋🏽
+                </div>
+            </div>
+
+            <!-- Bottom Action Area -->
+            <div class="w-full z-10 text-center space-y-5 mb-4 mt-auto">
+                <h2 class="text-xl text-sky-50 font-light px-2 drop-shadow-lg">What do the lines on your hands say about your future?</h2>
+                
+                <!-- Trust Badge / Offer -->
+                <div class="bg-black/40 border border-yellow-600/30 rounded-xl p-3 backdrop-blur-sm">
+                    <p class="text-yellow-500 text-sm font-semibold">✨ Get your detailed reading for just ₹51</p>
+                </div>
+
+                <!-- Hidden form for API integration -->
+                <input type="file" id="imageInput" accept="image/*" hidden>
+                
+                <!-- CTA Button -->
+                <button id="scanBtn" class="w-full py-4 rounded-2xl btn-gold text-white font-extrabold text-lg tracking-wide uppercase">
+                    <span id="scanBtnText">Scan Your Palm Now</span>
+                    <div class="spinner" id="spinner"></div>
+                </button>
+                <p class="text-[10px] text-gray-400">100% Private & Secure</p>
+            </div>
+        </div>
+
+        <!-- RESULTS VIEW (Hidden by default) -->
+        <div id="resultsView" class="w-full flex-col items-center flex-1 mt-6 hidden">
+            <div class="w-full bg-black/40 border border-yellow-600/30 rounded-2xl p-5 backdrop-blur-sm mb-4 h-[450px] flex flex-col">
+                <h3 class="text-gold text-xl font-bold mb-4 text-center">Your Cosmic Reading</h3>
+                <div id="readingContent" class="text-sm text-gray-300 leading-relaxed overflow-y-auto reading-scroll flex-1 pr-2">
+                    <!-- Reading will appear here -->
+                </div>
+            </div>
+            
+            <button id="resetBtn" class="w-full py-4 rounded-2xl btn-gold text-white font-extrabold text-md tracking-wide uppercase mt-auto">
+                Scan Another Palm
+            </button>
+        </div>
+        
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

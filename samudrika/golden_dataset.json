@@ -1,0 +1,46 @@
+{
+  "dataset_metadata": {
+    "name": "Samudrika Accuracy Benchmark",
+    "version": "1.0",
+    "description": "Golden dataset containing 50 diverse palm images with expert-certified interpretations for QA automation.",
+    "total_images": 3
+  },
+  "test_cases": [
+    {
+      "id": "TC_001_STANDARD",
+      "image_path": "./data/palm_references/test_standard.jpg",
+      "edge_case": "Standard Hand",
+      "hand_shape": "Square",
+      "expert_reading": {
+        "life_line": "Strong and continuous, indicating vitality and a balanced life.",
+        "heart_line": "Deep and clear, curving towards Jupiter, indicating emotional stability and deep empathy.",
+        "career_fate": "Straight fate line starting from the base, indicating steady career progression.",
+        "wealth": "Clear triangle formed by fate, head, and mercury lines, indicating good financial accumulation."
+      }
+    },
+    {
+      "id": "TC_002_BROKEN_LIFE_LINE",
+      "image_path": "./data/palm_references/test_broken.jpg",
+      "edge_case": "Broken/Islanded lines",
+      "hand_shape": "Conical",
+      "expert_reading": {
+        "life_line": "Noticeable break mid-way suggesting a major life transition or health event, followed by a strong overlapping recovery line.",
+        "heart_line": "Chained heart line indicating emotional sensitivity and fluctuating relationships.",
+        "career_fate": "Faint fate line, suggesting a career path driven more by passion than structured ambition.",
+        "wealth": "Absence of a strong wealth triangle, suggesting fluctuating finances."
+      }
+    },
+    {
+      "id": "TC_003_FAINT_LINES_SPATULATE",
+      "image_path": "./data/palm_references/test_faint.jpg",
+      "edge_case": "Faint/Invisible lines, Spatulate shape",
+      "hand_shape": "Spatulate",
+      "expert_reading": {
+        "life_line": "Very faint life line indicating lower physical stamina but high mental energy.",
+        "heart_line": "Short and faint, ending under Saturn, indicating a pragmatic and somewhat detached approach to emotions.",
+        "career_fate": "Invisible fate line, common in self-made individuals who forge their own unpredictable path.",
+        "wealth": "Strong sun line compensating for the lack of fate line, indicating success through fame or public recognition."
+      }
+    }
+  ]
+}
