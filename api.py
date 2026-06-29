@@ -150,4 +150,46 @@ def qa_palm_images_endpoint(req: VisualPalmRequest):
         raise HTTPException(status_code=400, detail=result["error"])
     return result
 
+from typing import List, Dict
+
+class AstrologyChatRequest(BaseModel):
+    name: str
+    dob: str
+    time: str
+    place: str
+    query: str
+    history: List[Dict[str, str]] = []
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "name": "Yaman",
+                "dob": "1995-06-15",
+                "time": "14:30",
+                "place": "Delhi, India",
+                "query": "What does my career look like?",
+                "history": [
+                    {"role": "user", "content": "Hello!"},
+                    {"role": "model", "content": "Hello Yaman! How can I help you today?"}
+                ]
+            }
+        }
+
+@app.post("/astrology_chat", tags=["Option 7"])
+def astrology_chat_endpoint(req: AstrologyChatRequest):
+    """
+    Takes user birth profile details, current question, and chat history.
+    Uses Gemini to extract relevant reference details from local PDFs and answers user queries.
+    """
+    user_info = {
+        "name": req.name,
+        "dob": req.dob,
+        "time": req.time,
+        "place": req.place
+    }
+    result = agent.qa_astrology(user_info, req.query, req.history)
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
+
 app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")

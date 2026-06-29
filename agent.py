@@ -639,6 +639,121 @@ def option3_qa_open_source():
         print(res['answer'])
         print("="*50)
 
+
+# ==========================================
+# Core Logic: Option 7 (Astrology Chat RAG)
+# ==========================================
+ASTROLOGY_BOOKS_DIR = os.path.join(DATA_DIR, "astrology_books")
+os.makedirs(ASTROLOGY_BOOKS_DIR, exist_ok=True)
+
+def extract_text_from_pdf(pdf_path):
+    text = ""
+    try:
+        from pypdf import PdfReader
+        reader = PdfReader(pdf_path)
+        for page in reader.pages:
+            t = page.extract_text()
+            if t:
+                text += t + "\n"
+    except Exception as e:
+        print(f"Error reading PDF {pdf_path}: {e}")
+    return text
+
+def get_astrology_context(query, max_chunks=3):
+    if not os.path.exists(ASTROLOGY_BOOKS_DIR):
+        return ""
+    
+    pdf_files = [f for f in os.listdir(ASTROLOGY_BOOKS_DIR) if f.lower().endswith('.pdf')]
+    if not pdf_files:
+        return ""
+        
+    all_text = ""
+    for file in pdf_files:
+        path = os.path.join(ASTROLOGY_BOOKS_DIR, file)
+        all_text += extract_text_from_pdf(path)
+        
+    if not all_text.strip():
+        return ""
+        
+    # Split by double newlines or single newlines
+    paragraphs = [p.strip() for p in all_text.split("\n\n") if len(p.strip()) > 50]
+    if not paragraphs:
+        paragraphs = [p.strip() for p in all_text.split("\n") if len(p.strip()) > 50]
+        
+    if not paragraphs:
+        return ""
+        
+    try:
+        model = SentenceTransformer('all-MiniLM-L6-v2')
+        query_emb = model.encode([query])[0]
+        paragraph_embs = model.encode(paragraphs)
+        similarities = cosine_similarity([query_emb], paragraph_embs)[0]
+        top_indices = np.argsort(similarities)[-max_chunks:][::-1]
+        
+        matched = [paragraphs[idx] for idx in top_indices if similarities[idx] > 0.15]
+        return "\n\n".join(matched)
+    except Exception as e:
+        print(f"Error doing semantic search: {e}")
+        return all_text[:2000]
+
+def qa_astrology(user_info, query, history):
+    client = get_gemini_client()
+    if not client:
+        return {"error": "GEMINI_API_KEY environment variable not set."}
+        
+    context = get_astrology_context(query)
+    
+    system_prompt = (
+        f"You are a professional Vedic Astrologer AI.\n"
+        f"Client Birth Details:\n"
+        f"- Name: {user_info['name']}\n"
+        f"- Date of Birth: {user_info['dob']}\n"
+        f"- Time of Birth: {user_info['time']}\n"
+        f"- Place of Birth: {user_info['place']}\n\n"
+    )
+    if context:
+        system_prompt += f"Relevant Astrological Reference Context:\n{context}\n\n"
+        
+    system_prompt += (
+        "Instructions:\n"
+        "- Provide a professional, warm, and spiritually guiding analysis.\n"
+        "- Focus on Vedic astrology principles (e.g. planets, houses, transits) if relevant.\n"
+        "- Answer the client's query directly based on their birth chart and the reference texts.\n"
+        "- Keep responses concise and structured so they read beautifully in a chat interface.\n"
+        "- Speak directly to the client (e.g., 'Your chart indicates...')."
+    )
+    
+    formatted_contents = []
+    for msg in history:
+        role = "user" if msg["role"] == "user" else "model"
+        formatted_contents.append({
+            "role": role,
+            "parts": [{"text": msg["content"]}]
+        })
+        
+    formatted_contents.append({
+        "role": "user",
+        "parts": [{"text": query}]
+    })
+    
+    import time
+    for attempt in range(3):
+        try:
+            response = client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=formatted_contents,
+                config={'system_instruction': system_prompt, 'temperature': 0.7}
+            )
+            return {
+                "success": True,
+                "response": response.text
+            }
+        except Exception as e:
+            if attempt == 2:
+                return {"error": f"Error querying Gemini: {str(e)}"}
+            print(f"Gemini API attempt {attempt+1} failed: {e}. Retrying in 3 seconds...")
+            time.sleep(3)
+
 def main():
     while True:
         print("\n===============================")

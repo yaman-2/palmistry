@@ -68,8 +68,31 @@
                     <label>Place of Birth (City, State)</label>
                     <input type="text" id="astro-place" required>
                 </div>
-                <button type="submit" class="submit-btn">Continue to WhatsApp ➔</button>
+                <button type="submit" class="submit-btn">Start Chat with Astrologer AI ➔</button>
             </form>
+        </div>
+
+        <!-- Astrology Chat Screen -->
+        <div class="screen" id="astrology-chat-screen">
+            <button class="back-btn" onclick="exitChat()">← Exit Chat</button>
+            <h1 class="glow-text">Astrology AI</h1>
+            <p class="subtitle" id="chat-subtitle">Personal Vedic Consultation</p>
+            
+            <div class="glass-card chat-container-box">
+                <div class="chat-header">
+                    <span id="chat-user-name" class="chat-user-name-tag">Vedic Profile</span>
+                </div>
+                <div class="chat-messages" id="chat-messages">
+                    <!-- Dynamic messages -->
+                </div>
+                <div class="typing-indicator" id="typing-indicator">
+                    <span></span><span></span><span></span>
+                </div>
+                <form class="chat-input-area" id="chat-form" onsubmit="sendChatMessage(event)">
+                    <input type="text" id="chat-input" placeholder="Ask about career, health, relationships..." required autocomplete="off">
+                    <button type="submit" class="send-btn">Send ➔</button>
+                </form>
+            </div>
         </div>
 
         <!-- Palmistry Form Screen -->
