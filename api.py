@@ -2,6 +2,8 @@ from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import Optional
+import os
+import uuid
 import agent
 
 app = FastAPI(
@@ -188,6 +190,61 @@ def astrology_chat_endpoint(req: AstrologyChatRequest):
         "place": req.place
     }
     result = agent.qa_astrology(user_info, req.query, req.history)
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
+
+class DocumentChatRequest(BaseModel):
+    document_id: str
+    query: str
+    history: List[Dict[str, str]] = []
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "document_id": "some-uuid-string",
+                "query": "Summarize this document",
+                "history": []
+            }
+        }
+
+UPLOAD_DOCS_DIR = os.path.join(agent.DATA_DIR, "uploaded_documents")
+os.makedirs(UPLOAD_DOCS_DIR, exist_ok=True)
+
+@app.post("/upload_document", tags=["Option 8"])
+async def upload_document_endpoint(file: UploadFile = File(...)):
+    """
+    Upload a PDF document, extract its text content, and save it under a unique document ID.
+    """
+    if not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="Only PDF files are supported.")
+        
+    try:
+        file_bytes = await file.read()
+        doc_id = str(uuid.uuid4())
+        
+        # Parse text from bytes
+        text_content = agent.extract_text_from_bytes(file_bytes)
+        if not text_content.strip():
+            raise HTTPException(status_code=400, detail="Could not extract text from the PDF. Make sure it's not scanned or empty.")
+            
+        dest_path = os.path.join(UPLOAD_DOCS_DIR, f"{doc_id}.txt")
+        with open(dest_path, "w", encoding="utf-8") as f:
+            f.write(text_content)
+            
+        return {"document_id": doc_id, "filename": file.filename}
+        
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to process PDF: {str(e)}")
+
+@app.post("/document_chat", tags=["Option 8"])
+def document_chat_endpoint(req: DocumentChatRequest):
+    """
+    Interact with an uploaded PDF document using your Gemini API key and RAG.
+    """
+    result = agent.qa_uploaded_document(req.document_id, req.query, req.history)
     if "error" in result:
         raise HTTPException(status_code=400, detail=result["error"])
     return result

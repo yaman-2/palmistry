@@ -754,6 +754,91 @@ def qa_astrology(user_info, query, history):
             print(f"Gemini API attempt {attempt+1} failed: {e}. Retrying in 3 seconds...")
             time.sleep(3)
 
+def extract_text_from_bytes(file_bytes):
+    text_content = ""
+    try:
+        from pypdf import PdfReader
+        pdf_reader = PdfReader(io.BytesIO(file_bytes))
+        for page in pdf_reader.pages:
+            t = page.extract_text()
+            if t:
+                text_content += t + "\n"
+    except Exception as e:
+        print(f"Error reading PDF from bytes: {e}")
+    return text_content
+
+def qa_uploaded_document(document_id, query, history):
+    client = get_gemini_client()
+    if not client:
+        return {"error": "GEMINI_API_KEY environment variable not set."}
+        
+    doc_path = os.path.join(DATA_DIR, "uploaded_documents", f"{document_id}.txt")
+    if not os.path.exists(doc_path):
+        return {"error": "Document context file not found on server."}
+        
+    with open(doc_path, "r", encoding="utf-8") as f:
+        all_text = f.read()
+        
+    # Semantic Search Context Retrieval
+    context = ""
+    if all_text.strip():
+        paragraphs = [p.strip() for p in all_text.split("\n\n") if len(p.strip()) > 50]
+        if not paragraphs:
+            paragraphs = [p.strip() for p in all_text.split("\n") if len(p.strip()) > 50]
+        if paragraphs:
+            try:
+                model = SentenceTransformer('all-MiniLM-L6-v2')
+                query_emb = model.encode([query])[0]
+                paragraph_embs = model.encode(paragraphs)
+                similarities = cosine_similarity([query_emb], paragraph_embs)[0]
+                top_indices = np.argsort(similarities)[-3:][::-1]
+                matched = [paragraphs[idx] for idx in top_indices if similarities[idx] > 0.15]
+                context = "\n\n".join(matched)
+            except Exception as e:
+                print(f"Error doing semantic search on uploaded document: {e}")
+                context = all_text[:2000]
+                
+    system_prompt = (
+        "You are a helpful AI assistant tasked with answering questions about the provided document.\n"
+        "You MUST answer using ONLY the provided document context below.\n"
+        "If you do not know the answer or if the answer is not in the context, be honest and state that the document does not contain that information.\n\n"
+    )
+    if context:
+        system_prompt += f"Document Reference Context:\n{context}\n\n"
+        
+    system_prompt += "Guidelines:\n- Be precise, direct, and reference the document details where applicable."
+    
+    formatted_contents = []
+    for msg in history:
+        role = "user" if msg["role"] == "user" else "model"
+        formatted_contents.append({
+            "role": role,
+            "parts": [{"text": msg["content"]}]
+        })
+        
+    formatted_contents.append({
+        "role": "user",
+        "parts": [{"text": query}]
+    })
+    
+    import time
+    for attempt in range(3):
+        try:
+            response = client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=formatted_contents,
+                config={'system_instruction': system_prompt, 'temperature': 0.2}
+            )
+            return {
+                "success": True,
+                "response": response.text
+            }
+        except Exception as e:
+            if attempt == 2:
+                return {"error": f"Error querying Gemini: {str(e)}"}
+            print(f"Gemini API attempt {attempt+1} failed: {e}. Retrying in 3 seconds...")
+            time.sleep(3)
+
 def main():
     while True:
         print("\n===============================")

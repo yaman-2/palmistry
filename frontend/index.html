@@ -33,6 +33,11 @@
                     <h2>Palmistry</h2>
                     <p>Read the history and future written in the lines of your hands.</p>
                 </div>
+                <div class="glass-card" onclick="selectPath('docchat')">
+                    <div class="icon">📚</div>
+                    <h2>Document Chat</h2>
+                    <p>Upload a PDF document and chat with it using Gemini AI.</p>
+                </div>
             </div>
         </div>
 
@@ -90,6 +95,47 @@
                 </div>
                 <form class="chat-input-area" id="chat-form" onsubmit="sendChatMessage(event)">
                     <input type="text" id="chat-input" placeholder="Ask about career, health, relationships..." required autocomplete="off">
+                    <button type="submit" class="send-btn">Send ➔</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Document Upload Screen -->
+        <div class="screen" id="docchat-screen">
+            <button class="back-btn" onclick="goBack()">← Back</button>
+            <h1 class="glow-text">Document Chat</h1>
+            <p class="subtitle">Upload a PDF to begin your interactive chat session</p>
+            
+            <form class="glass-form" id="docchat-upload-form" onsubmit="submitDocumentUpload(event)">
+                <div class="input-group">
+                    <label>Select PDF Document</label>
+                    <input type="file" id="docchat-file" accept=".pdf" required>
+                </div>
+                <div class="info-box">
+                    <p>📄 Your file will be processed and indexed locally. The chat session will run directly using your own Gemini key.</p>
+                </div>
+                <button type="submit" class="submit-btn" id="docchat-upload-btn">Upload and Start Chatting ➔</button>
+            </form>
+        </div>
+
+        <!-- Document Chat Screen -->
+        <div class="screen" id="docchat-chat-screen">
+            <button class="back-btn" onclick="exitDocumentChat()">← Exit Chat</button>
+            <h1 class="glow-text">Document AI</h1>
+            <p class="subtitle" id="docchat-subtitle">Chatting with uploaded PDF</p>
+            
+            <div class="glass-card chat-container-box">
+                <div class="chat-header">
+                    <span id="docchat-file-name" class="chat-user-name-tag">Document Context</span>
+                </div>
+                <div class="chat-messages" id="docchat-messages">
+                    <!-- Dynamic messages -->
+                </div>
+                <div class="typing-indicator" id="docchat-typing-indicator">
+                    <span></span><span></span><span></span>
+                </div>
+                <form class="chat-input-area" id="docchat-form" onsubmit="sendDocumentChatMessage(event)">
+                    <input type="text" id="docchat-input" placeholder="Ask questions about your document..." required autocomplete="off">
                     <button type="submit" class="send-btn">Send ➔</button>
                 </form>
             </div>

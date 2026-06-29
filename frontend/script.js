@@ -3,6 +3,8 @@ const WHATSAPP_NUMBER = "919997754141";
 
 let activeProfile = null;
 let chatHistory = [];
+let activeDocumentId = null;
+let documentChatHistory = [];
 
 function selectPath(path) {
     document.querySelectorAll('.screen').forEach(el => {
@@ -145,4 +147,127 @@ function redirectToWhatsApp(text) {
     const encodedText = encodeURIComponent(text);
     const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedText}`;
     window.open(whatsappUrl, '_blank');
+}
+
+// ==========================================
+// Document Chat Client Logic
+// ==========================================
+async function submitDocumentUpload(e) {
+    e.preventDefault();
+    
+    const fileInput = document.getElementById('docchat-file');
+    const uploadBtn = document.getElementById('docchat-upload-btn');
+    if (!fileInput.files.length) return;
+    
+    const file = fileInput.files[0];
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    uploadBtn.innerText = "Ingesting PDF...";
+    uploadBtn.disabled = true;
+    
+    try {
+        const response = await fetch('/upload_document', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        uploadBtn.innerText = "Upload and Start Chatting ➔";
+        uploadBtn.disabled = false;
+        
+        if (response.ok) {
+            activeDocumentId = data.document_id;
+            
+            // Transition to chat screen
+            document.querySelectorAll('.screen').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.getElementById('docchat-chat-screen').classList.add('active');
+            
+            // Set header title
+            document.getElementById('docchat-file-name').innerText = `Document: ${data.filename}`;
+            
+            // Reset chat
+            documentChatHistory = [];
+            const messagesDiv = document.getElementById('docchat-messages');
+            messagesDiv.innerHTML = '';
+            
+            appendDocumentChatMessage('ai', `Document uploaded successfully! 📄 I have analyzed your PDF "${data.filename}". Ask me any questions about its content!`);
+        } else {
+            alert(`Upload Failed: ${data.detail || 'Error processing PDF'}`);
+        }
+    } catch (error) {
+        uploadBtn.innerText = "Upload and Start Chatting ➔";
+        uploadBtn.disabled = false;
+        alert(`Error connecting to server: ${error.message}`);
+    }
+}
+
+function exitDocumentChat() {
+    activeDocumentId = null;
+    documentChatHistory = [];
+    document.querySelectorAll('.screen').forEach(el => {
+        el.classList.remove('active');
+    });
+    document.getElementById('docchat-screen').classList.add('active');
+}
+
+function appendDocumentChatMessage(sender, text) {
+    const messagesDiv = document.getElementById('docchat-messages');
+    const msgElement = document.createElement('div');
+    msgElement.className = `message ${sender}`;
+    msgElement.innerText = text;
+    messagesDiv.appendChild(msgElement);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    
+    documentChatHistory.push({
+        role: sender === 'user' ? 'user' : 'model',
+        content: text
+    });
+}
+
+async function sendDocumentChatMessage(e) {
+    e.preventDefault();
+    
+    const inputElement = document.getElementById('docchat-input');
+    const queryText = inputElement.value.trim();
+    if (!queryText || !activeDocumentId) return;
+    
+    appendDocumentChatMessage('user', queryText);
+    inputElement.value = '';
+    
+    const typingIndicator = document.getElementById('docchat-typing-indicator');
+    typingIndicator.style.display = 'flex';
+    
+    const messagesDiv = document.getElementById('docchat-messages');
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    
+    try {
+        const response = await fetch('/document_chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                document_id: activeDocumentId,
+                query: queryText,
+                history: documentChatHistory.slice(0, -1)
+            })
+        });
+        
+        const data = await response.json();
+        
+        typingIndicator.style.display = 'none';
+        
+        if (response.ok) {
+            appendDocumentChatMessage('ai', data.response);
+        } else {
+            appendDocumentChatMessage('ai', `⚠️ Error: ${data.detail || 'Could not fetch response.'}`);
+        }
+    } catch (error) {
+        typingIndicator.style.display = 'none';
+        appendDocumentChatMessage('ai', `⚠️ Error: Connection failed.`);
+    }
 }

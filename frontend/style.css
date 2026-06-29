@@ -371,3 +371,17 @@ select option {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-4px); }
 }
+
+/* Premium File Upload Styling */
+input[type="file"] {
+    background: rgba(255, 255, 255, 0.4);
+    border: 1px dashed var(--glass-border);
+    padding: 15px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+input[type="file"]:hover {
+    background: rgba(255, 255, 255, 0.7);
+    border-color: var(--primary);
+}
