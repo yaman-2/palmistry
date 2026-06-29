@@ -195,14 +195,14 @@ def astrology_chat_endpoint(req: AstrologyChatRequest):
     return result
 
 class DocumentChatRequest(BaseModel):
-    document_id: str
+    document_ids: List[str]
     query: str
     history: List[Dict[str, str]] = []
 
     class Config:
         json_schema_extra = {
             "example": {
-                "document_id": "some-uuid-string",
+                "document_ids": ["uuid-1", "uuid-2"],
                 "query": "Summarize this document",
                 "history": []
             }
@@ -252,9 +252,9 @@ def list_documents_endpoint():
 @app.post("/document_chat", tags=["Option 8"])
 def document_chat_endpoint(req: DocumentChatRequest):
     """
-    Interact with an uploaded PDF document using your Gemini API key and RAG.
+    Interact with multiple uploaded PDF documents simultaneously using your Gemini API key and RAG.
     """
-    result = agent.qa_uploaded_document(req.document_id, req.query, req.history)
+    result = agent.qa_uploaded_documents(req.document_ids, req.query, req.history)
     if "error" in result:
         raise HTTPException(status_code=400, detail=result["error"])
     return result

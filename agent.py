@@ -766,46 +766,83 @@ def extract_text_from_bytes(file_bytes):
         print(f"Error reading PDF from bytes: {e}")
     return text_content
 
-def qa_uploaded_document(document_id, query, history):
+def qa_uploaded_documents(document_ids, query, history):
     client = get_gemini_client()
     if not client:
         return {"error": "GEMINI_API_KEY environment variable not set."}
         
-    doc_path = os.path.join(DATA_DIR, "uploaded_documents", f"{document_id}.txt")
-    if not os.path.exists(doc_path):
-        return {"error": "Document context file not found on server."}
+    # Get filenames mappings from DB to print pretty sources
+    filename_map = {}
+    try:
+        init_docs_db()
+        conn = sqlite3.connect(DB_DOCS_PATH)
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, filename FROM documents")
+        rows = cursor.fetchall()
+        conn.close()
+        filename_map = {r[0]: r[1] for r in rows}
+    except Exception as e:
+        print(f"Error fetching filename map: {e}")
+
+    all_paragraphs = []
+    
+    for doc_id in document_ids:
+        doc_path = os.path.join(DATA_DIR, "uploaded_documents", f"{doc_id}.txt")
+        if not os.path.exists(doc_path):
+            continue
+            
+        with open(doc_path, "r", encoding="utf-8") as f:
+            all_text = f.read()
+            
+        if not all_text.strip():
+            continue
+            
+        filename = filename_map.get(doc_id, f"Document-{doc_id[:8]}")
         
-    with open(doc_path, "r", encoding="utf-8") as f:
-        all_text = f.read()
-        
-    # Semantic Search Context Retrieval
-    context = ""
-    if all_text.strip():
         paragraphs = [p.strip() for p in all_text.split("\n\n") if len(p.strip()) > 50]
         if not paragraphs:
             paragraphs = [p.strip() for p in all_text.split("\n") if len(p.strip()) > 50]
-        if paragraphs:
-            try:
-                model = SentenceTransformer('all-MiniLM-L6-v2')
-                query_emb = model.encode([query])[0]
-                paragraph_embs = model.encode(paragraphs)
-                similarities = cosine_similarity([query_emb], paragraph_embs)[0]
-                top_indices = np.argsort(similarities)[-3:][::-1]
-                matched = [paragraphs[idx] for idx in top_indices if similarities[idx] > 0.15]
-                context = "\n\n".join(matched)
-            except Exception as e:
-                print(f"Error doing semantic search on uploaded document: {e}")
-                context = all_text[:2000]
+            
+        for p in paragraphs:
+            all_paragraphs.append({
+                "text": p,
+                "source": filename
+            })
+            
+    if not all_paragraphs:
+        return {"error": "No document content found to search."}
+        
+    # Semantic Search Context Retrieval
+    context = ""
+    try:
+        model = SentenceTransformer('all-MiniLM-L6-v2')
+        query_emb = model.encode([query])[0]
+        
+        texts = [p["text"] for p in all_paragraphs]
+        paragraph_embs = model.encode(texts)
+        similarities = cosine_similarity([query_emb], paragraph_embs)[0]
+        top_indices = np.argsort(similarities)[-5:][::-1] # select top 5 matches
+        
+        matched = []
+        for idx in top_indices:
+            if similarities[idx] > 0.15:
+                item = all_paragraphs[idx]
+                matched.append(f"Source ({item['source']}):\n{item['text']}")
                 
+        context = "\n\n".join(matched)
+    except Exception as e:
+        print(f"Error doing semantic search on uploaded documents: {e}")
+        context = "\n\n".join([f"Source ({p['source']}):\n{p['text']}" for p in all_paragraphs[:3]])
+
     system_prompt = (
-        "You are a helpful AI assistant tasked with answering questions about the provided document.\n"
-        "You MUST answer using ONLY the provided document context below.\n"
-        "If you do not know the answer or if the answer is not in the context, be honest and state that the document does not contain that information.\n\n"
+        "You are a helpful AI assistant tasked with answering questions about the provided documents.\n"
+        "You MUST answer using ONLY the provided document contexts below.\n"
+        "If you do not know the answer or if the answer is not in the context, be honest and state that the documents do not contain that information.\n\n"
     )
     if context:
         system_prompt += f"Document Reference Context:\n{context}\n\n"
         
-    system_prompt += "Guidelines:\n- Be precise, direct, and reference the document details where applicable."
+    system_prompt += "Guidelines:\n- Be precise, direct, and reference the specific source filename where applicable (e.g. 'According to foundations.pdf...')."
     
     formatted_contents = []
     for msg in history:

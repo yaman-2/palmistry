@@ -26,3 +26,7 @@ samudrika/*.db
 .env.local
 .env.*
 
+# User uploads and local documents database
+data/uploaded_documents/
+data/documents.db
+

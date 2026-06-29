@@ -256,7 +256,7 @@ async function sendDocumentChatMessage(e) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                document_id: activeDocumentId,
+                document_ids: [activeDocumentId],
                 query: queryText,
                 history: documentChatHistory.slice(0, -1)
             })
