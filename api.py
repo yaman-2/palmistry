@@ -232,12 +232,22 @@ async def upload_document_endpoint(file: UploadFile = File(...)):
         with open(dest_path, "w", encoding="utf-8") as f:
             f.write(text_content)
             
+        # Log to SQLite DB
+        agent.add_document_to_db(doc_id, file.filename)
+            
         return {"document_id": doc_id, "filename": file.filename}
         
     except HTTPException as he:
         raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to process PDF: {str(e)}")
+
+@app.get("/list_documents", tags=["Option 8"])
+def list_documents_endpoint():
+    """
+    List all previously uploaded documents.
+    """
+    return agent.get_all_documents()
 
 @app.post("/document_chat", tags=["Option 8"])
 def document_chat_endpoint(req: DocumentChatRequest):

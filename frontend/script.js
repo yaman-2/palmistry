@@ -11,6 +11,10 @@ function selectPath(path) {
         el.classList.remove('active');
     });
     document.getElementById(`${path}-screen`).classList.add('active');
+    
+    if (path === 'docchat') {
+        loadDocumentList();
+    }
 }
 
 function goBack() {
@@ -212,6 +216,7 @@ function exitDocumentChat() {
         el.classList.remove('active');
     });
     document.getElementById('docchat-screen').classList.add('active');
+    loadDocumentList();
 }
 
 function appendDocumentChatMessage(sender, text) {
@@ -270,4 +275,58 @@ async function sendDocumentChatMessage(e) {
         typingIndicator.style.display = 'none';
         appendDocumentChatMessage('ai', `⚠️ Error: Connection failed.`);
     }
+}
+
+// ==========================================
+// Document List History Helpers
+// ==========================================
+async function loadDocumentList() {
+    const listContainer = document.getElementById('doc-list-container');
+    if (!listContainer) return;
+    
+    try {
+        const response = await fetch('/list_documents');
+        const docs = await response.json();
+        
+        listContainer.innerHTML = '';
+        if (docs.length === 0) {
+            listContainer.innerHTML = '<p class="empty-list-msg" style="color: #7f8c8d; font-size: 0.95rem; font-style: italic;">No documents uploaded yet.</p>';
+            return;
+        }
+        
+        docs.forEach(doc => {
+            const item = document.createElement('div');
+            item.className = 'doc-item';
+            item.innerHTML = `
+                <div class="doc-details">
+                    <span class="doc-name">${doc.filename}</span>
+                    <span class="doc-date">Uploaded: ${doc.uploaded_at}</span>
+                </div>
+                <button class="doc-chat-btn" onclick="startChatWithDoc('${doc.id}', '${doc.filename}')">Chat ➔</button>
+            `;
+            listContainer.appendChild(item);
+        });
+    } catch (error) {
+        listContainer.innerHTML = '<p class="empty-list-msg" style="color: #c0392b; font-size: 0.95rem;">Failed to load previous uploads.</p>';
+    }
+}
+
+function startChatWithDoc(docId, filename) {
+    activeDocumentId = docId;
+    
+    // Transition to chat screen
+    document.querySelectorAll('.screen').forEach(el => {
+        el.classList.remove('active');
+    });
+    document.getElementById('docchat-chat-screen').classList.add('active');
+    
+    // Set header title
+    document.getElementById('docchat-file-name').innerText = `Document: ${filename}`;
+    
+    // Reset chat
+    documentChatHistory = [];
+    const messagesDiv = document.getElementById('docchat-messages');
+    messagesDiv.innerHTML = '';
+    
+    appendDocumentChatMessage('ai', `Opened session for "${filename}". Ask me any questions about its content!`);
 }

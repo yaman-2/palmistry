@@ -10,6 +10,7 @@ if os.path.exists(".env"):
                 except ValueError:
                     pass
 import re
+import sqlite3
 import sys
 import uuid
 import pandas as pd
@@ -836,6 +837,56 @@ def qa_uploaded_document(document_id, query, history):
                 return {"error": f"Error querying Gemini: {str(e)}"}
             print(f"Gemini API attempt {attempt+1} failed: {e}. Retrying in 3 seconds...")
             time.sleep(3)
+
+# ==========================================
+# Persistent Document Chat SQLite DB
+# ==========================================
+DB_DOCS_PATH = os.path.join(DATA_DIR, "documents.db")
+
+def init_docs_db():
+    conn = sqlite3.connect(DB_DOCS_PATH)
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS documents (
+            id TEXT PRIMARY KEY,
+            filename TEXT,
+            uploaded_at TEXT
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+def add_document_to_db(doc_id, filename):
+    try:
+        init_docs_db()
+        conn = sqlite3.connect(DB_DOCS_PATH)
+        cursor = conn.cursor()
+        import datetime
+        uploaded_at = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        cursor.execute('''
+            INSERT OR REPLACE INTO documents (id, filename, uploaded_at)
+            VALUES (?, ?, ?)
+        ''', (doc_id, filename, uploaded_at))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"Error adding document to DB: {e}")
+
+def get_all_documents():
+    try:
+        init_docs_db()
+        conn = sqlite3.connect(DB_DOCS_PATH)
+        cursor = conn.cursor()
+        cursor.execute('SELECT id, filename, uploaded_at FROM documents ORDER BY uploaded_at DESC')
+        rows = cursor.fetchall()
+        conn.close()
+        return [{"id": r[0], "filename": r[1], "uploaded_at": r[2]} for r in rows]
+    except Exception as e:
+        print(f"Error fetching documents: {e}")
+        return []
+
+# Run DB initialization on startup
+init_docs_db()
 
 def main():
     while True:
