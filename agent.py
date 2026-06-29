@@ -383,30 +383,29 @@ def qa_open_source(query):
     )
     user_prompt = f"Context:\n{context}\n\nQuestion: {query}\n"
     
-    try:
-        response = requests.post(
-            'http://localhost:11434/api/generate',
-            json={
-                "model": "llama3",
-                "system": system_prompt,
-                "prompt": user_prompt,
-                "stream": False,
-                "options": {
-                    "temperature": 0.0
-                }
-            }
-        )
-        if response.status_code == 200:
-            result = response.json()
+    # Use Gemini API instead of local Ollama
+    client = get_gemini_client()
+    if not client:
+        return {"error": "GEMINI_API_KEY environment variable not set in .env."}
+        
+    import time
+    for attempt in range(3):
+        try:
+            response = client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=[user_prompt],
+                config={'system_instruction': system_prompt, 'temperature': 0.0}
+            )
             return {
                 "success": True, 
-                "answer": result.get('response', ''),
+                "answer": response.text,
                 "context_preview": context[:200]
             }
-        else:
-            return {"error": f"Ollama API returned status {response.status_code}. Is it running?"}
-    except requests.exceptions.ConnectionError:
-        return {"error": "Could not connect to Ollama. Make sure it's installed and running."}
+        except Exception as e:
+            if attempt == 2:
+                return {"error": f"Error querying Gemini: {str(e)}"}
+            print(f"Gemini API attempt {attempt+1} failed: {e}. Retrying in 3 seconds...")
+            time.sleep(3)
 
 
 # ==========================================
@@ -471,30 +470,29 @@ def qa_text(text_content, query):
     )
     user_prompt = f"Document Context:\n{context}\n\nQuestion: {query}\n"
     
-    try:
-        response = requests.post(
-            'http://localhost:11434/api/generate',
-            json={
-                "model": "llama3",
-                "system": system_prompt,
-                "prompt": user_prompt,
-                "stream": False,
-                "options": {
-                    "temperature": 0.0
-                }
-            }
-        )
-        if response.status_code == 200:
-            result = response.json()
+    # Use Gemini API instead of local Ollama
+    client = get_gemini_client()
+    if not client:
+        return {"error": "GEMINI_API_KEY environment variable not set in .env."}
+        
+    import time
+    for attempt in range(3):
+        try:
+            response = client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=[user_prompt],
+                config={'system_instruction': system_prompt, 'temperature': 0.0}
+            )
             return {
                 "success": True, 
-                "answer": result.get('response', ''),
+                "answer": response.text,
                 "context_preview": context[:200]
             }
-        else:
-            return {"error": f"Ollama API returned status {response.status_code}. Is it running?"}
-    except requests.exceptions.ConnectionError:
-        return {"error": "Could not connect to Ollama. Make sure it's installed and running."}
+        except Exception as e:
+            if attempt == 2:
+                return {"error": f"Error querying Gemini: {str(e)}"}
+            print(f"Gemini API attempt {attempt+1} failed: {e}. Retrying in 3 seconds...")
+            time.sleep(3)
 
 # ==========================================
 # Core Logic: Option 6 (Visual Palm Reading)
