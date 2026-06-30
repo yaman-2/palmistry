@@ -3,186 +3,221 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cosmic Insights - Astrology & Palmistry</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Samudrika - Premium Vedic Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
-<body>
-    <div class="background-blobs">
-        <div class="blob blob-1"></div>
-        <div class="blob blob-2"></div>
-    </div>
+<body class="text-white min-h-screen flex items-center justify-center p-4 antialiased">
 
-    <div class="container" id="main-container">
-        <!-- Selection Screen -->
+    <!-- Mobile Device Mockup Container -->
+    <div class="relative w-full max-w-[380px] h-[800px] rounded-[2.5rem] temple-border overflow-hidden flex flex-col items-center justify-between py-10 px-6">
+        
+        <!-- SELECTION SCREEN -->
         <div class="screen active" id="selection-screen">
-            <div class="logo-container">
-                <img src="logo.jpg" alt="Samudrika Logo" class="main-logo" onerror="this.style.display='none'">
+            <!-- Header -->
+            <div class="text-center z-10 w-full mt-2">
+                <h1 class="text-4xl font-extrabold text-gold tracking-widest uppercase">Samudrika</h1>
+                <p class="text-[11px] text-yellow-500 mt-1 font-medium tracking-wide uppercase">Ancient Wisdom • Modern Tech</p>
             </div>
-            <h1 class="glow-text">SAMUDRIKA</h1>
-            <p class="subtitle">Palmistry & Destiny Reading</p>
-            
-            <div class="card-container">
-                <div class="glass-card" onclick="selectPath('astrology')">
-                    <div class="icon">✨</div>
-                    <h2>Astrology</h2>
-                    <p>Unveil the cosmic blueprint of your life through the stars.</p>
+
+            <!-- Vedic Clock Centerpiece -->
+            <div class="relative w-64 h-64 my-6 mx-auto">
+                <div class="absolute top-1/2 left-1/2 w-56 h-56 rounded-full vedic-ring-1 transform -translate-x-1/2 -translate-y-1/2"></div>
+                <div class="absolute top-1/2 left-1/2 w-44 h-44 rounded-full vedic-ring-2 transform -translate-x-1/2 -translate-y-1/2"></div>
+                <div class="absolute top-1/2 left-1/2 w-32 h-32 rounded-full vedic-ring-3 transform -translate-x-1/2 -translate-y-1/2"></div>
+                <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-24 h-24 rounded-full bg-sky-500/10 blur-xl"></div>
+                
+                <!-- Central Icon -->
+                <div class="absolute top-1/2 left-1/2 mystic-pulse text-6xl text-sky-300 transform -translate-x-1/2 -translate-y-1/2">
+                    ✋🏽
                 </div>
-                <div class="glass-card" onclick="selectPath('palmistry')">
-                    <div class="icon">✋</div>
-                    <h2>Palmistry</h2>
-                    <p>Read the history and future written in the lines of your hands.</p>
+            </div>
+
+            <!-- Bottom Menu Area -->
+            <div class="w-full z-10 text-center space-y-4 mb-2 mt-auto">
+                <h2 class="text-md text-sky-100 font-light px-2">Unveil your cosmic blueprint:</h2>
+                
+                <div class="space-y-3">
+                    <button onclick="selectPath('palmistry')" class="w-full py-3 rounded-xl btn-gold text-white font-bold text-sm tracking-wider uppercase">
+                        ✋ Palmistry Reading (₹51)
+                    </button>
+                    <button onclick="selectPath('astrology')" class="w-full py-3 rounded-xl btn-gold text-white font-bold text-sm tracking-wider uppercase">
+                        ✨ Astrology Chat (AI)
+                    </button>
+                    <button onclick="selectPath('docchat')" class="w-full py-3 rounded-xl btn-gold text-white font-bold text-sm tracking-wider uppercase">
+                        📚 Document Chat (RAG)
+                    </button>
                 </div>
-                <div class="glass-card" onclick="selectPath('docchat')">
-                    <div class="icon">📚</div>
-                    <h2>Document Chat</h2>
-                    <p>Upload a PDF document and chat with it using Gemini AI.</p>
-                </div>
+                <p class="text-[9px] text-gray-400">100% Private & Secure</p>
             </div>
         </div>
 
-        <!-- Astrology Form Screen -->
-        <div class="screen" id="astrology-screen">
-            <button class="back-btn" onclick="goBack()">← Back</button>
-            <h1 class="glow-text">Astrology Reading</h1>
+        <!-- PALMISTRY FORM SCREEN -->
+        <div class="screen" id="palmistry-screen">
+            <div class="flex items-center w-full mb-4">
+                <button class="text-xs text-yellow-500 font-bold hover:text-yellow-400" onclick="goBack()">← BACK</button>
+                <h2 class="text-lg font-bold text-gold tracking-wider uppercase mx-auto">Palmistry Setup</h2>
+            </div>
             
-            <form class="glass-form" id="astrology-form" onsubmit="submitAstrology(event)">
-                <div class="input-group">
-                    <label>Full Name</label>
-                    <input type="text" id="astro-name" required>
-                </div>
-                <div class="input-group">
-                    <label>Mobile No.</label>
-                    <input type="tel" id="astro-mobile" required>
-                </div>
-                <div class="input-group">
-                    <label>Email ID</label>
-                    <input type="email" id="astro-email" required>
-                </div>
-                <div class="input-group row">
-                    <div class="col">
-                        <label>Date of Birth</label>
-                        <input type="date" id="astro-dob" required>
+            <form class="flex-1 flex flex-col justify-between" id="palmistry-form" onsubmit="submitPalmistry(event)">
+                <div class="space-y-4 overflow-y-auto pr-1">
+                    <div class="flex flex-col">
+                        <label class="text-xs text-yellow-500 font-semibold mb-1">Full Name</label>
+                        <input type="text" id="palm-name" class="glass-input text-sm" placeholder="Enter full name" required>
                     </div>
-                    <div class="col">
-                        <label>Time of Birth</label>
-                        <input type="time" id="astro-time" required>
+                    <div class="flex flex-col">
+                        <label class="text-xs text-yellow-500 font-semibold mb-1">Mobile No.</label>
+                        <input type="tel" id="palm-mobile" class="glass-input text-sm" placeholder="Include country code" required>
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-xs text-yellow-500 font-semibold mb-1">Email ID</label>
+                        <input type="email" id="palm-email" class="glass-input text-sm" placeholder="Enter email" required>
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-xs text-yellow-500 font-semibold mb-1">Handedness</label>
+                        <select id="palm-hand" class="glass-input text-sm bg-[#0a1122] text-white" required>
+                            <option value="" disabled selected>Select active hand...</option>
+                            <option value="Leftie">Left Hand</option>
+                            <option value="Rightie">Right Hand</option>
+                        </select>
+                    </div>
+                    <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3 text-xs text-yellow-400 leading-relaxed mt-2">
+                        📸 <strong>WhatsApp Redirect:</strong> We will open WhatsApp so you can attach 4-5 clear photos of your palms.
                     </div>
                 </div>
-                <div class="input-group">
-                    <label>Place of Birth (City, State)</label>
-                    <input type="text" id="astro-place" required>
-                </div>
-                <button type="submit" class="submit-btn">Start Chat with Astrologer AI ➔</button>
+                
+                <button type="submit" class="w-full py-3 rounded-xl btn-gold text-white font-bold text-sm tracking-wider uppercase mt-4">
+                    Continue to WhatsApp ➔
+                </button>
             </form>
         </div>
 
-        <!-- Astrology Chat Screen -->
-        <div class="screen" id="astrology-chat-screen">
-            <button class="back-btn" onclick="exitChat()">← Exit Chat</button>
-            <h1 class="glow-text">Astrology AI</h1>
-            <p class="subtitle" id="chat-subtitle">Personal Vedic Consultation</p>
+        <!-- ASTROLOGY FORM SCREEN -->
+        <div class="screen" id="astrology-screen">
+            <div class="flex items-center w-full mb-4">
+                <button class="text-xs text-yellow-500 font-bold hover:text-yellow-400" onclick="goBack()">← BACK</button>
+                <h2 class="text-lg font-bold text-gold tracking-wider uppercase mx-auto">Vedic Chart Details</h2>
+            </div>
             
-            <div class="glass-card chat-container-box">
-                <div class="chat-header">
-                    <span id="chat-user-name" class="chat-user-name-tag">Vedic Profile</span>
+            <form class="flex-1 flex flex-col justify-between" id="astrology-form" onsubmit="submitAstrology(event)">
+                <div class="space-y-3.5 overflow-y-auto pr-1">
+                    <div class="flex flex-col">
+                        <label class="text-xs text-yellow-500 font-semibold mb-1">Full Name</label>
+                        <input type="text" id="astro-name" class="glass-input text-sm" placeholder="Full Name" required>
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-xs text-yellow-500 font-semibold mb-1">Mobile No.</label>
+                        <input type="tel" id="astro-mobile" class="glass-input text-sm" placeholder="Mobile" required>
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-xs text-yellow-500 font-semibold mb-1">Email ID</label>
+                        <input type="email" id="astro-email" class="glass-input text-sm" placeholder="Email" required>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="flex flex-col">
+                            <label class="text-xs text-yellow-500 font-semibold mb-1">Date of Birth</label>
+                            <input type="date" id="astro-dob" class="glass-input text-sm" required>
+                        </div>
+                        <div class="flex flex-col">
+                            <label class="text-xs text-yellow-500 font-semibold mb-1">Time of Birth</label>
+                            <input type="time" id="astro-time" class="glass-input text-sm" required>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-col">
+                        <label class="text-xs text-yellow-500 font-semibold mb-1">Place of Birth</label>
+                        <input type="text" id="astro-place" class="glass-input text-sm" placeholder="City, State, Country" required>
+                    </div>
                 </div>
+                
+                <button type="submit" class="w-full py-3 rounded-xl btn-gold text-white font-bold text-sm tracking-wider uppercase mt-4">
+                    Open AI Consultation ➔
+                </button>
+            </form>
+        </div>
+
+        <!-- ASTROLOGY CHAT SCREEN -->
+        <div class="screen" id="astrology-chat-screen">
+            <div class="flex items-center w-full mb-3 pb-2 border-b border-yellow-600/20">
+                <button class="text-xs text-yellow-500 font-bold hover:text-yellow-400" onclick="exitChat()">← EXIT</button>
+                <span id="chat-user-name" class="text-xs text-yellow-500 font-semibold truncate ml-auto">Vedic Profile</span>
+            </div>
+            
+            <div class="flex-1 flex flex-col justify-between overflow-hidden">
+                <!-- Chat log -->
                 <div class="chat-messages" id="chat-messages">
                     <!-- Dynamic messages -->
                 </div>
+                
+                <!-- Typing spinner -->
                 <div class="typing-indicator" id="typing-indicator">
                     <span></span><span></span><span></span>
                 </div>
-                <form class="chat-input-area" id="chat-form" onsubmit="sendChatMessage(event)">
-                    <input type="text" id="chat-input" placeholder="Ask about career, health, relationships..." required autocomplete="off">
-                    <button type="submit" class="send-btn">Send ➔</button>
+                
+                <!-- Chat input -->
+                <form class="flex gap-2 mt-3 pt-3 border-t border-yellow-600/10" id="chat-form" onsubmit="sendChatMessage(event)">
+                    <input type="text" id="chat-input" class="flex-1 glass-input text-sm" placeholder="Ask about career, love..." required autocomplete="off">
+                    <button type="submit" class="px-4 rounded-xl btn-gold text-white text-xs font-bold uppercase">Send</button>
                 </form>
             </div>
         </div>
 
-        <!-- Document Upload Screen -->
+        <!-- DOCUMENT UPLOAD SCREEN -->
         <div class="screen" id="docchat-screen">
-            <button class="back-btn" onclick="goBack()">← Back</button>
-            <h1 class="glow-text">Document Chat</h1>
-            <p class="subtitle">Upload a PDF to begin your interactive chat session</p>
+            <div class="flex items-center w-full mb-4">
+                <button class="text-xs text-yellow-500 font-bold hover:text-yellow-400" onclick="goBack()">← BACK</button>
+                <h2 class="text-lg font-bold text-gold tracking-wider uppercase mx-auto">PDF RAG Ingestion</h2>
+            </div>
             
-            <form class="glass-form" id="docchat-upload-form" onsubmit="submitDocumentUpload(event)">
-                <div class="input-group">
-                    <label>Select PDF Document</label>
-                    <input type="file" id="docchat-file" accept=".pdf" required>
-                </div>
-                <div class="info-box">
-                    <p>📄 Your file will be processed and indexed locally. The chat session will run directly using your own Gemini key.</p>
-                </div>
-                <button type="submit" class="submit-btn" id="docchat-upload-btn">Upload and Start Chatting ➔</button>
-            </form>
+            <div class="flex-1 flex flex-col justify-between overflow-hidden">
+                <form class="space-y-4" id="docchat-upload-form" onsubmit="submitDocumentUpload(event)">
+                    <div class="flex flex-col">
+                        <label class="text-xs text-yellow-500 font-semibold mb-2">Upload PDF Reference</label>
+                        <input type="file" id="docchat-file" accept=".pdf" required class="text-xs">
+                    </div>
+                    <button type="submit" class="w-full py-3 rounded-xl btn-gold text-white font-bold text-sm tracking-wider uppercase" id="docchat-upload-btn">
+                        Ingest Document ➔
+                    </button>
+                </form>
 
-            <!-- History List Panel -->
-            <div class="glass-card doc-history-panel" style="margin-top: 2rem; padding: 1.5rem !important;">
-                <h3 class="panel-title" style="margin-bottom: 1rem; color: var(--primary); font-size: 1.1rem; font-weight: 600;">Your Uploaded Documents</h3>
-                <div class="doc-list" id="doc-list-container">
-                    <p class="empty-list-msg" style="color: #7f8c8d; font-size: 0.95rem; font-style: italic;">Loading previous uploads...</p>
+                <!-- Documents database history list -->
+                <div class="flex-1 flex flex-col mt-6 overflow-hidden">
+                    <h3 class="text-xs font-semibold text-yellow-500 uppercase tracking-wider mb-2">Uploaded Libraries</h3>
+                    <div class="doc-list" id="doc-list-container">
+                        <p class="text-xs text-gray-400 italic">No libraries uploaded yet.</p>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Document Chat Screen -->
+        <!-- DOCUMENT CHAT SCREEN -->
         <div class="screen" id="docchat-chat-screen">
-            <button class="back-btn" onclick="exitDocumentChat()">← Exit Chat</button>
-            <h1 class="glow-text">Document AI</h1>
-            <p class="subtitle" id="docchat-subtitle">Chatting with uploaded PDF</p>
+            <div class="flex items-center w-full mb-3 pb-2 border-b border-yellow-600/20">
+                <button class="text-xs text-yellow-500 font-bold hover:text-yellow-400" onclick="exitDocumentChat()">← EXIT</button>
+                <span id="docchat-file-name" class="text-xs text-yellow-500 font-semibold truncate ml-auto">Library Context</span>
+            </div>
             
-            <div class="glass-card chat-container-box">
-                <div class="chat-header">
-                    <span id="docchat-file-name" class="chat-user-name-tag">Document Context</span>
-                </div>
+            <div class="flex-1 flex flex-col justify-between overflow-hidden">
+                <!-- Chat log -->
                 <div class="chat-messages" id="docchat-messages">
                     <!-- Dynamic messages -->
                 </div>
+                
+                <!-- Typing spinner -->
                 <div class="typing-indicator" id="docchat-typing-indicator">
                     <span></span><span></span><span></span>
                 </div>
-                <form class="chat-input-area" id="docchat-form" onsubmit="sendDocumentChatMessage(event)">
-                    <input type="text" id="docchat-input" placeholder="Ask questions about your document..." required autocomplete="off">
-                    <button type="submit" class="send-btn">Send ➔</button>
+                
+                <!-- Chat input -->
+                <form class="flex gap-2 mt-3 pt-3 border-t border-yellow-600/10" id="docchat-form" onsubmit="sendDocumentChatMessage(event)">
+                    <input type="text" id="docchat-input" class="flex-1 glass-input text-sm" placeholder="Ask questions about library..." required autocomplete="off">
+                    <button type="submit" class="px-4 rounded-xl btn-gold text-white text-xs font-bold uppercase">Send</button>
                 </form>
             </div>
         </div>
 
-        <!-- Palmistry Form Screen -->
-        <div class="screen" id="palmistry-screen">
-            <button class="back-btn" onclick="goBack()">← Back</button>
-            <h1 class="glow-text">Palmistry Reading</h1>
-            
-            <form class="glass-form" id="palmistry-form" onsubmit="submitPalmistry(event)">
-                <div class="input-group">
-                    <label>Full Name</label>
-                    <input type="text" id="palm-name" required>
-                </div>
-                <div class="input-group">
-                    <label>Mobile No.</label>
-                    <input type="tel" id="palm-mobile" required>
-                </div>
-                <div class="input-group">
-                    <label>Email ID</label>
-                    <input type="email" id="palm-email" required>
-                </div>
-                <div class="input-group">
-                    <label>Are you a Leftie or Rightie?</label>
-                    <select id="palm-hand" required>
-                        <option value="" disabled selected>Select Handedness...</option>
-                        <option value="Leftie">Leftie</option>
-                        <option value="Rightie">Rightie</option>
-                    </select>
-                </div>
-                
-                <div class="info-box">
-                    <p>📸 <strong>Important:</strong> After clicking continue, you will be redirected to WhatsApp. Please attach <strong>4-5 clear photos of your palms from different angles</strong> in the chat.</p>
-                </div>
-
-                <button type="submit" class="submit-btn">Continue to WhatsApp ➔</button>
-            </form>
-        </div>
     </div>
 
     <script src="script.js"></script>

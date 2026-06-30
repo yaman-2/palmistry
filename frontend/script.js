@@ -290,7 +290,7 @@ async function loadDocumentList() {
         
         listContainer.innerHTML = '';
         if (docs.length === 0) {
-            listContainer.innerHTML = '<p class="empty-list-msg" style="color: #7f8c8d; font-size: 0.95rem; font-style: italic;">No documents uploaded yet.</p>';
+            listContainer.innerHTML = '<p class="empty-list-msg text-xs text-gray-400 italic">No libraries ingested yet.</p>';
             return;
         }
         
