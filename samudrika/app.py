@@ -3,6 +3,7 @@ import sqlite3
 import base64
 import uuid
 import logging
+import io
 from datetime import datetime
 from typing import Optional
 
@@ -12,13 +13,12 @@ from fastapi.responses import JSONResponse, FileResponse
 import requests
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 from pydantic import BaseModel
+from PIL import Image
+from google import genai
 
 # -------------------------------------------------------------------
 # Configuration & Placeholders
 # -------------------------------------------------------------------
-# TODO: Replace these placeholders with your actual keys and URLs
-LLM_API_URL = os.getenv("LLM_API_URL", "https://api.my-palm-model.com/v1/predict")
-LLM_API_KEY = os.getenv("LLM_API_KEY", "YOUR_CUSTOM_LLM_API_KEY")
 WHATSAPP_VERIFY_TOKEN = os.getenv("WHATSAPP_VERIFY_TOKEN", "YOUR_WHATSAPP_VERIFY_TOKEN")
 WHATSAPP_API_TOKEN = os.getenv("WHATSAPP_API_TOKEN", "YOUR_WHATSAPP_BEARER_TOKEN")
 SYSTEM_PROMPT = "Analyze this palm image based on Vedic palmistry. Focus on major lines: life line, heart line, head line, and fate line."
@@ -92,37 +92,42 @@ def serve_js():
 # -------------------------------------------------------------------
 import asyncio
 
+def get_gemini_client():
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        return None
+    try:
+        return genai.Client(api_key=api_key)
+    except Exception as e:
+        logger.error(f"Failed to initialize Gemini Client: {e}")
+        return None
+
 @retry(
     stop=stop_after_attempt(3), 
     wait=wait_exponential(multiplier=1, min=2, max=10),
     retry=retry_if_exception_type((requests.exceptions.Timeout, requests.exceptions.ConnectionError))
 )
-def call_custom_llm(base64_image: str) -> str:
+def call_gemini_llm(image_bytes: bytes) -> str:
     """
-    Makes a POST request to the custom LLM API with the image and prompt.
-    Implements exponential backoff retry for timeouts and connection errors.
+    Calls Google Gemini 2.5 Flash with the image bytes and system prompt.
+    Implements retry logic.
     """
-    # MOCK RESPONSE FOR LOCAL TESTING
-    if "api.my-palm-model.com" in LLM_API_URL:
-        import time
-        time.sleep(3) # Simulate network delay
-        return "✨ **Cosmic Reading Successful!** ✨\n\nYour life line shows immense vitality and a strong connection to nature. The deep groove in your fate line suggests a major career breakthrough is approaching in the next 6 months.\n\nYour heart line reveals a deeply empathetic soul. The small cross near your Jupiter mount indicates spiritual protection.\n\n*(Note: This is a placeholder reading because your Custom LLM API URL has not been set yet. To go live, update LLM_API_URL in app.py!)*"
+    client = get_gemini_client()
+    if not client:
+        logger.warning("GEMINI_API_KEY not found. Returning mock response.")
+        return "✨ **Cosmic Reading Successful! (Mock Demo)** ✨\n\nYour life line shows immense vitality and a strong connection to nature. The deep groove in your fate line suggests a major career breakthrough is approaching in the next 6 months.\n\nYour heart line reveals a deeply empathetic soul. The small cross near your Jupiter mount indicates spiritual protection.\n\n*(Note: To get live readings, please configure GEMINI_API_KEY in your environment!)*"
 
-    headers = {
-        "Authorization": f"Bearer {LLM_API_KEY}",
-        "Content-Type": "application/json"
-    }
-    payload = {
-        "system_prompt": SYSTEM_PROMPT,
-        "image_data": base64_image
-    }
-    
-    response = requests.post(LLM_API_URL, headers=headers, json=payload, timeout=30)
-    response.raise_for_status()  # Raise an exception for HTTP errors
-    
-    # Assuming the API returns JSON with a 'prediction' or 'text' field
-    data = response.json()
-    return data.get("prediction", data.get("text", str(data)))
+    try:
+        pil_image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+    except Exception as e:
+        logger.error(f"Failed to parse image bytes: {e}")
+        raise ValueError(f"Invalid image format: {e}")
+
+    response = client.models.generate_content(
+        model='gemini-2.5-flash',
+        contents=[pil_image, SYSTEM_PROMPT]
+    )
+    return response.text.strip()
 
 def fetch_image_from_url(url: str) -> bytes:
     """Downloads an image from a public URL."""
@@ -168,18 +173,14 @@ async def process_palm(
         else:
             image_bytes = fetch_image_from_url(image_url)
             
-        # 2. Convert to Base64 securely
-        base64_encoded = base64.b64encode(image_bytes).decode('utf-8')
-        
-        # 3. Call LLM with retry logic
+        # 2. Call Gemini LLM with retry logic
         try:
-            llm_response = call_custom_llm(base64_encoded)
+            llm_response = call_gemini_llm(image_bytes)
         except Exception as e:
-            # Fallback for ANY error (including tenacity RetryError or ConnectionError)
-            logger.warning(f"Connection failed, using mock response. Error: {e}")
+            logger.warning(f"Gemini call failed, using mock response. Error: {e}")
             import time
             time.sleep(2)
-            llm_response = "✨ **Cosmic Reading (Mock Fallback)** ✨\n\nYour life line shows immense vitality and a strong connection to nature. The deep groove in your fate line suggests a major career breakthrough is approaching soon.\n\n*(Note: We couldn't connect to your LLM API. Please check your LLM_API_URL and API_KEY in app.py!)*"
+            llm_response = "✨ **Cosmic Reading (Mock Fallback)** ✨\n\nYour life line shows immense vitality and a strong connection to nature. The deep groove in your fate line suggests a major career breakthrough is approaching soon.\n\n*(Note: We couldn't connect to your Gemini API. Please check your GEMINI_API_KEY environment variable!)*"
             
         # 4. Log Success
         background_tasks.add_task(log_request, req_id, user_identifier, "SUCCESS", llm_response)
@@ -271,11 +272,8 @@ def process_whatsapp_image(media_id: str, phone_number: str):
         # media_response = requests.get(media_url, headers={"Authorization": f"Bearer {WHATSAPP_API_TOKEN}"})
         # image_bytes = media_response.content
         
-        # Step 3: Base64 Encode
-        # base64_encoded = base64.b64encode(image_bytes).decode('utf-8')
-        
-        # Step 4: Call LLM
-        # llm_response = call_custom_llm(base64_encoded)
+        # Step 3: Call LLM
+        # llm_response = call_gemini_llm(image_bytes)
         
         # Step 5: Log & Reply
         # log_request(req_id, phone_number, "SUCCESS", llm_response)

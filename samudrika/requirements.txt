@@ -4,3 +4,5 @@ requests
 python-multipart
 pydantic
 tenacity
+google-genai
+pillow
