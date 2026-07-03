@@ -4,9 +4,15 @@ services:
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT
+    disk:
+      name: samudrika-db-disk
+      mountPath: /data
+      sizeGB: 1
     envVars:
       - key: PYTHON_VERSION
         value: 3.10.0
+      - key: DATABASE_PATH
+        value: /data/samudrika.db
       - key: LLM_API_URL
         sync: false
       - key: LLM_API_KEY

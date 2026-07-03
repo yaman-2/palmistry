@@ -23,7 +23,7 @@ WHATSAPP_VERIFY_TOKEN = os.getenv("WHATSAPP_VERIFY_TOKEN", "YOUR_WHATSAPP_VERIFY
 WHATSAPP_API_TOKEN = os.getenv("WHATSAPP_API_TOKEN", "YOUR_WHATSAPP_BEARER_TOKEN")
 SYSTEM_PROMPT = "Analyze this palm image based on Vedic palmistry. Focus on major lines: life line, heart line, head line, and fate line."
 
-DB_PATH = "samudrika.db"
+DB_PATH = os.getenv("DATABASE_PATH", "samudrika.db")
 FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "frontend")
 
 logging.basicConfig(level=logging.INFO)
