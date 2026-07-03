@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+pydantic
+google-genai
+pypdf
+pandas
+numpy
+opencv-python-headless
+requests
+pillow
+youtube-transcript-api
+yt-dlp
+sentence-transformers
+scikit-learn
+python-multipart
