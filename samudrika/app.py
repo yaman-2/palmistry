@@ -284,3 +284,39 @@ def process_whatsapp_image(media_id: str, phone_number: str):
     except Exception as e:
         logger.error(f"Failed to process WhatsApp image {media_id}: {e}")
         log_request(req_id, phone_number, "FAILED", str(e))
+
+class ChatRequest(BaseModel):
+    message: str
+    history: list = []
+
+@app.post("/chat")
+async def chat_endpoint(req: ChatRequest):
+    client = get_gemini_client()
+    if not client:
+        logger.warning("GEMINI_API_KEY not configured. Returning fallback response.")
+        return {"response": "✨ **Sage Samudra (Mock Response)** ✨\n\nI can see in your lines that you are seeking answers. (Set GEMINI_API_KEY in your environment for active AI responses!)"}
+    
+    system_prompt = (
+        "You are Sage Samudra, a premium Vedic Astrologer and Palmist. "
+        "Answer the user's questions about their life, career, marriage, or wealth in a wise, mystic, and reassuring tone. "
+        "Keep your answers concise, around 2-3 sentences, so it feels like a live chat conversation."
+    )
+    
+    try:
+        contents = []
+        for h in req.history:
+            role = "user" if h.get("role") == "user" else "model"
+            contents.append({"role": role, "parts": [{"text": h.get("text")}]})
+        
+        contents.append({"role": "user", "parts": [{"text": req.message}]})
+        
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=contents,
+            config={'system_instruction': system_prompt, 'temperature': 0.7}
+        )
+        return {"response": response.text.strip()}
+    except Exception as e:
+        logger.error(f"Chat error: {e}")
+        return {"response": f"The stars are temporarily clouded. Error: {str(e)}"}
+
