@@ -5,6 +5,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const spinner = document.getElementById('spinner');
     const imageInput = document.getElementById('imageInput');
     
+    const registerView = document.getElementById('registerView');
+    const regName = document.getElementById('regName');
+    const regEmail = document.getElementById('regEmail');
+    const regPhone = document.getElementById('regPhone');
+    const submitRegBtn = document.getElementById('submitRegBtn');
+
     const mainView = document.getElementById('mainView');
     const resultsView = document.getElementById('resultsView');
     const readingContent = document.getElementById('readingContent');
@@ -34,6 +40,70 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedPack = 51; // 51 or 21
     let chatHistory = [];
     let isFreeTrialUsed = false;
+    let sessionId = localStorage.getItem('samudrika_session_id') || null;
+
+    // Check session on load
+    if (sessionId) {
+        registerView.classList.add('hidden');
+        registerView.classList.remove('flex');
+        mainView.classList.remove('hidden');
+        mainView.classList.add('flex');
+    } else {
+        registerView.classList.remove('hidden');
+        registerView.classList.add('flex');
+        mainView.classList.add('hidden');
+        mainView.classList.remove('flex');
+    }
+
+    // Handle Profile Registration Submit
+    submitRegBtn.addEventListener('click', async () => {
+        const name = regName.value.trim();
+        const email = regEmail.value.trim();
+        const phone = regPhone.value.trim();
+
+        if (!name || !email || !phone) {
+            alert('Please fill in all details to proceed.');
+            return;
+        }
+
+        // Basic Email regex validation
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            alert('Please enter a valid email address.');
+            return;
+        }
+
+        submitRegBtn.disabled = true;
+        submitRegBtn.innerText = 'Creating Profile...';
+
+        try {
+            const response = await fetch('/start_session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, phone })
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.detail || 'Failed to start session.');
+            }
+
+            const data = await response.json();
+            sessionId = data.session_id;
+            localStorage.setItem('samudrika_session_id', sessionId);
+
+            // Shift Views
+            registerView.classList.add('hidden');
+            registerView.classList.remove('flex');
+            mainView.classList.remove('hidden');
+            mainView.classList.add('flex');
+
+        } catch (error) {
+            alert('Cosmic registration failed: ' + error.message);
+        } finally {
+            submitRegBtn.disabled = false;
+            submitRegBtn.innerText = 'Start Cosmic Journey';
+        }
+    });
 
     // Trigger file picker when Scan button is clicked
     scanBtn.addEventListener('click', () => {
@@ -57,6 +127,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const formData = new FormData();
         formData.append('image_file', file);
+        if (sessionId) {
+            formData.append('session_id', sessionId);
+        }
 
         try {
             const response = await fetch('/process_palm', {
@@ -266,8 +339,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    message: query,
-                    history: chatHistory
+                    session_id: sessionId,
+                    message: query
                 })
             });
 

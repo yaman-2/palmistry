@@ -118,8 +118,39 @@
             </div>
         </div>
 
-        <!-- MAIN VIEW: Centerpiece: Clock & Hand -->
-        <div id="mainView" class="w-full flex flex-col items-center justify-between flex-1">
+        <!-- REGISTRATION VIEW (Shown by default) -->
+        <div id="registerView" class="w-full flex flex-col items-center justify-between flex-1 mt-6">
+            <div class="w-full space-y-4 my-auto">
+                <div class="text-center space-y-2 mb-6">
+                    <h2 class="text-2xl font-bold text-gold">Create Destiny Profile</h2>
+                    <p class="text-xs text-gray-400 px-4">Enter your details to unlock your customized palm reading and chat with the Sage.</p>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="space-y-1">
+                        <label class="text-[10px] uppercase tracking-wider text-yellow-500 font-semibold">Your Full Name</label>
+                        <input type="text" id="regName" placeholder="e.g. Yaman Saraswat" class="w-full bg-slate-950/80 border border-yellow-600/30 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-yellow-500 placeholder-gray-600">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] uppercase tracking-wider text-yellow-500 font-semibold">Email Address</label>
+                        <input type="email" id="regEmail" placeholder="e.g. yaman@example.com" class="w-full bg-slate-950/80 border border-yellow-600/30 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-yellow-500 placeholder-gray-600">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] uppercase tracking-wider text-yellow-500 font-semibold">Phone Number</label>
+                        <input type="tel" id="regPhone" placeholder="e.g. +91 9999999999" class="w-full bg-slate-950/80 border border-yellow-600/30 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-yellow-500 placeholder-gray-600">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="w-full mt-auto mb-4">
+                <button id="submitRegBtn" class="w-full py-4 rounded-2xl btn-gold text-white font-extrabold text-md tracking-wide uppercase focus:outline-none">
+                    Start Cosmic Journey
+                </button>
+            </div>
+        </div>
+
+        <!-- MAIN VIEW: Centerpiece: Clock & Hand (Hidden by default) -->
+        <div id="mainView" class="w-full flex-col items-center justify-between flex-1 hidden">
             <div class="relative w-80 h-80 my-8">
                 <!-- Rotating Rings -->
                 <div class="absolute top-1/2 left-1/2 w-72 h-72 rounded-full vedic-ring-1 transform -translate-x-1/2 -translate-y-1/2"></div>

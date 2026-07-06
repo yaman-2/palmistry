@@ -35,7 +35,7 @@ app = FastAPI(title="Samudrika API", description="API Middleware for Palm Readin
 # Database Setup
 # -------------------------------------------------------------------
 def init_db():
-    """Initializes the SQLite database with the required table for logging requests."""
+    """Initializes the SQLite database with the required tables for logging requests and chat sessions."""
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute('''
@@ -45,6 +45,17 @@ def init_db():
             user_phone_number TEXT,
             status TEXT,
             llm_response_text TEXT
+        )
+    ''')
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS chat_sessions (
+            session_id TEXT PRIMARY KEY,
+            timestamp TEXT,
+            name TEXT,
+            email TEXT,
+            phone TEXT,
+            palm_reading TEXT,
+            chat_history TEXT
         )
     ''')
     conn.commit()
@@ -146,6 +157,29 @@ def health_check():
     """Simple health check endpoint for cloud deployments (Render/Vercel)."""
     return {"status": "Samudrika Webhook is Live"}
 
+class SessionStartRequest(BaseModel):
+    name: str
+    email: str
+    phone: str
+
+@app.post("/start_session")
+def start_session(req: SessionStartRequest):
+    session_id = str(uuid.uuid4())
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        timestamp = datetime.utcnow().isoformat()
+        cursor.execute('''
+            INSERT INTO chat_sessions (session_id, timestamp, name, email, phone, palm_reading, chat_history)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (session_id, timestamp, req.name, req.email, req.phone, "", "[]"))
+        conn.commit()
+        conn.close()
+        return {"session_id": session_id}
+    except Exception as e:
+        logger.error(f"Failed to create session: {e}")
+        raise HTTPException(status_code=500, detail=f"Database error: {e}")
+
 # -------------------------------------------------------------------
 # API Endpoint 1: Process Palm Image
 # -------------------------------------------------------------------
@@ -182,7 +216,22 @@ async def process_palm(
             time.sleep(2)
             llm_response = "✨ **Cosmic Reading (Mock Fallback)** ✨\n\nYour life line shows immense vitality and a strong connection to nature. The deep groove in your fate line suggests a major career breakthrough is approaching soon.\n\n*(Note: We couldn't connect to your Gemini API. Please check your GEMINI_API_KEY environment variable!)*"
             
-        # 4. Log Success
+        # 4. Update session data if session_id is provided
+        if session_id:
+            try:
+                conn = sqlite3.connect(DB_PATH)
+                cursor = conn.cursor()
+                cursor.execute('''
+                    UPDATE chat_sessions
+                    SET palm_reading = ?
+                    WHERE session_id = ?
+                ''', (llm_response, session_id))
+                conn.commit()
+                conn.close()
+            except Exception as e:
+                logger.error(f"Failed to save palm reading to session {session_id}: {e}")
+
+        # 5. Log Success
         background_tasks.add_task(log_request, req_id, user_identifier, "SUCCESS", llm_response)
         
         return JSONResponse({
@@ -286,37 +335,76 @@ def process_whatsapp_image(media_id: str, phone_number: str):
         log_request(req_id, phone_number, "FAILED", str(e))
 
 class ChatRequest(BaseModel):
+    session_id: str
     message: str
-    history: list = []
 
 @app.post("/chat")
 async def chat_endpoint(req: ChatRequest):
+    # 1. Fetch current history and details from DB
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute('SELECT name, chat_history, palm_reading FROM chat_sessions WHERE session_id = ?', (req.session_id,))
+        row = cursor.fetchone()
+        conn.close()
+    except Exception as e:
+        logger.error(f"Failed to fetch session {req.session_id}: {e}")
+        raise HTTPException(status_code=500, detail="Database access error")
+       
+    if not row:
+        raise HTTPException(status_code=404, detail="Session not found")
+        
+    name, history_str, palm_reading = row
+    import json
+    try:
+        history = json.loads(history_str) if history_str else []
+    except Exception:
+        history = []
+        
+    # 2. Call Gemini
     client = get_gemini_client()
     if not client:
         logger.warning("GEMINI_API_KEY not configured. Returning fallback response.")
-        return {"response": "✨ **Sage Samudra (Mock Response)** ✨\n\nI can see in your lines that you are seeking answers. (Set GEMINI_API_KEY in your environment for active AI responses!)"}
-    
-    system_prompt = (
-        "You are Sage Samudra, a premium Vedic Astrologer and Palmist. "
-        "Answer the user's questions about their life, career, marriage, or wealth in a wise, mystic, and reassuring tone. "
-        "Keep your answers concise, around 2-3 sentences, so it feels like a live chat conversation."
-    )
-    
-    try:
+        response_text = f"✨ **Sage Samudra (Mock Response)** ✨\n\nI can see in your lines that you are seeking answers, {name}. (Set GEMINI_API_KEY in your environment for active AI responses!)"
+    else:
+        system_prompt = (
+            f"You are Sage Samudra, a premium Vedic Astrologer and Palmist. "
+            f"You are currently chatting with {name}. "
+            f"If they have scanned their palm, this is their reading:\n\"{palm_reading}\"\n"
+            f"Answer the user's questions about their life, career, marriage, or wealth in a wise, mystic, and reassuring tone. "
+            f"Keep your answers concise, around 2-3 sentences, so it feels like a live chat conversation."
+        )
+        
         contents = []
-        for h in req.history:
+        for h in history:
             role = "user" if h.get("role") == "user" else "model"
             contents.append({"role": role, "parts": [{"text": h.get("text")}]})
         
         contents.append({"role": "user", "parts": [{"text": req.message}]})
         
-        response = client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=contents,
-            config={'system_instruction': system_prompt, 'temperature': 0.7}
-        )
-        return {"response": response.text.strip()}
+        try:
+            response = client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=contents,
+                config={'system_instruction': system_prompt, 'temperature': 0.7}
+            )
+            response_text = response.text.strip()
+        except Exception as e:
+            logger.error(f"Chat error: {e}")
+            response_text = f"The stars are temporarily clouded. Error: {str(e)}"
+            
+    # 3. Update DB with new history
+    history.append({"role": "user", "text": req.message})
+    history.append({"role": "model", "text": response_text})
+    
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute('UPDATE chat_sessions SET chat_history = ? WHERE session_id = ?', (json.dumps(history), req.session_id))
+        conn.commit()
+        conn.close()
     except Exception as e:
-        logger.error(f"Chat error: {e}")
-        return {"response": f"The stars are temporarily clouded. Error: {str(e)}"}
+        logger.error(f"Failed to update chat history for session {req.session_id}: {e}")
+        
+    return {"response": response_text}
 
