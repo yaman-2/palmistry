@@ -1,5 +1,5 @@
 import os
-import sqlite3
+import json
 import base64
 import uuid
 import logging
@@ -16,6 +16,9 @@ from pydantic import BaseModel
 from PIL import Image
 from google import genai
 
+from sqlalchemy import create_engine, Column, String
+from sqlalchemy.orm import declarative_base, sessionmaker
+
 # -------------------------------------------------------------------
 # Configuration & Placeholders
 # -------------------------------------------------------------------
@@ -23,7 +26,6 @@ WHATSAPP_VERIFY_TOKEN = os.getenv("WHATSAPP_VERIFY_TOKEN", "YOUR_WHATSAPP_VERIFY
 WHATSAPP_API_TOKEN = os.getenv("WHATSAPP_API_TOKEN", "YOUR_WHATSAPP_BEARER_TOKEN")
 SYSTEM_PROMPT = "Analyze this palm image based on Vedic palmistry. Focus on major lines: life line, heart line, head line, and fate line."
 
-DB_PATH = os.getenv("DATABASE_PATH", "samudrika.db")
 FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "frontend")
 
 logging.basicConfig(level=logging.INFO)
@@ -34,49 +36,54 @@ app = FastAPI(title="Samudrika API", description="API Middleware for Palm Readin
 # -------------------------------------------------------------------
 # Database Setup
 # -------------------------------------------------------------------
+DATABASE_URL = os.getenv("POSTGRES_URL", "sqlite:///samudrika.db")
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {})
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+class RequestLog(Base):
+    __tablename__ = "request_logs"
+    id = Column(String, primary_key=True, index=True)
+    timestamp = Column(String)
+    user_phone_number = Column(String)
+    status = Column(String)
+    llm_response_text = Column(String)
+
+class ChatSession(Base):
+    __tablename__ = "chat_sessions"
+    session_id = Column(String, primary_key=True, index=True)
+    timestamp = Column(String)
+    name = Column(String)
+    email = Column(String)
+    phone = Column(String)
+    dob = Column(String)
+    tob = Column(String)
+    pob = Column(String)
+    palm_reading = Column(String)
+    chat_history = Column(String)
+
 def init_db():
-    """Initializes the SQLite database with the required tables for logging requests and chat sessions."""
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS request_logs (
-            id TEXT PRIMARY KEY,
-            timestamp TEXT,
-            user_phone_number TEXT,
-            status TEXT,
-            llm_response_text TEXT
-        )
-    ''')
-    cursor.execute('''DROP TABLE IF EXISTS chat_sessions''')
-    cursor.execute('''
-        CREATE TABLE chat_sessions (
-            session_id TEXT PRIMARY KEY,
-            timestamp TEXT,
-            name TEXT,
-            email TEXT,
-            phone TEXT,
-            dob TEXT,
-            tob TEXT,
-            pob TEXT,
-            palm_reading TEXT,
-            chat_history TEXT
-        )
-    ''')
-    conn.commit()
-    conn.close()
+    """Initializes the SQLAlchemy database with the required tables."""
+    Base.metadata.create_all(bind=engine)
 
 def log_request(req_id: str, phone: str, status: str, response: str):
     """Logs the request metadata and response into the SQLite database."""
     try:
-        conn = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
-        timestamp = datetime.utcnow().isoformat()
-        cursor.execute('''
-            INSERT INTO request_logs (id, timestamp, user_phone_number, status, llm_response_text)
-            VALUES (?, ?, ?, ?, ?)
-        ''', (req_id, timestamp, phone, status, response))
-        conn.commit()
-        conn.close()
+        db = SessionLocal()
+        new_log = RequestLog(
+            id=req_id,
+            timestamp=datetime.utcnow().isoformat(),
+            user_phone_number=phone,
+            status=status,
+            llm_response_text=response
+        )
+        db.add(new_log)
+        db.commit()
+    finally:
+        db.close()
     except Exception as e:
         logger.error(f"Failed to log to DB: {e}")
 
@@ -173,15 +180,23 @@ class SessionStartRequest(BaseModel):
 def start_session(req: SessionStartRequest):
     session_id = str(uuid.uuid4())
     try:
-        conn = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
-        timestamp = datetime.utcnow().isoformat()
-        cursor.execute('''
-            INSERT INTO chat_sessions (session_id, timestamp, name, email, phone, dob, tob, pob, palm_reading, chat_history)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (session_id, timestamp, req.name, req.email, req.phone, req.dob, req.tob, req.pob, "", "[]"))
-        conn.commit()
-        conn.close()
+        db = SessionLocal()
+        new_session = ChatSession(
+            session_id=session_id,
+            timestamp=datetime.utcnow().isoformat(),
+            name=req.name,
+            email=req.email,
+            phone=req.phone,
+            dob=req.dob,
+            tob=req.tob,
+            pob=req.pob,
+            palm_reading="",
+            chat_history="[]"
+        )
+        db.add(new_session)
+        db.commit()
+    finally:
+        db.close()
         return {"session_id": session_id}
     except Exception as e:
         logger.error(f"Failed to create session: {e}")
@@ -226,15 +241,12 @@ async def process_palm(
         # 4. Update session data if session_id is provided
         if session_id:
             try:
-                conn = sqlite3.connect(DB_PATH)
-                cursor = conn.cursor()
-                cursor.execute('''
-                    UPDATE chat_sessions
-                    SET palm_reading = ?
-                    WHERE session_id = ?
-                ''', (llm_response, session_id))
-                conn.commit()
-                conn.close()
+                db = SessionLocal()
+                session = db.query(ChatSession).filter(ChatSession.session_id == session_id).first()
+                if session:
+                    session.palm_reading = llm_response
+                    db.commit()
+                db.close()
             except Exception as e:
                 logger.error(f"Failed to save palm reading to session {session_id}: {e}")
 
@@ -349,19 +361,23 @@ class ChatRequest(BaseModel):
 async def chat_endpoint(req: ChatRequest):
     # 1. Fetch current history and details from DB
     try:
-        conn = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
-        cursor.execute('SELECT name, dob, tob, pob, chat_history, palm_reading FROM chat_sessions WHERE session_id = ?', (req.session_id,))
-        row = cursor.fetchone()
-        conn.close()
+        db = SessionLocal()
+        session = db.query(ChatSession).filter(ChatSession.session_id == req.session_id).first()
     except Exception as e:
         logger.error(f"Failed to fetch session {req.session_id}: {e}")
         raise HTTPException(status_code=500, detail="Database access error")
        
-    if not row:
+    if not session:
+        if 'db' in locals(): db.close()
         raise HTTPException(status_code=404, detail="Session not found")
         
-    name, dob, tob, pob, history_str, palm_reading = row
+    name = session.name
+    dob = session.dob
+    tob = session.tob
+    pob = session.pob
+    palm_reading = session.palm_reading
+    history_str = session.chat_history
+    
     import json
     try:
         history = json.loads(history_str) if history_str else []
@@ -406,13 +422,12 @@ async def chat_endpoint(req: ChatRequest):
     history.append({"role": "model", "text": response_text})
     
     try:
-        conn = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
-        cursor.execute('UPDATE chat_sessions SET chat_history = ? WHERE session_id = ?', (json.dumps(history), req.session_id))
-        conn.commit()
-        conn.close()
+        session.chat_history = json.dumps(history)
+        db.commit()
     except Exception as e:
         logger.error(f"Failed to update chat history for session {req.session_id}: {e}")
+    finally:
+        db.close()
         
     return {"response": response_text}
 
