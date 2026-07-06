@@ -47,13 +47,17 @@ def init_db():
             llm_response_text TEXT
         )
     ''')
+    cursor.execute('''DROP TABLE IF EXISTS chat_sessions''')
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS chat_sessions (
+        CREATE TABLE chat_sessions (
             session_id TEXT PRIMARY KEY,
             timestamp TEXT,
             name TEXT,
             email TEXT,
             phone TEXT,
+            dob TEXT,
+            tob TEXT,
+            pob TEXT,
             palm_reading TEXT,
             chat_history TEXT
         )
@@ -161,6 +165,9 @@ class SessionStartRequest(BaseModel):
     name: str
     email: str
     phone: str
+    dob: str
+    tob: str
+    pob: str
 
 @app.post("/start_session")
 def start_session(req: SessionStartRequest):
@@ -170,9 +177,9 @@ def start_session(req: SessionStartRequest):
         cursor = conn.cursor()
         timestamp = datetime.utcnow().isoformat()
         cursor.execute('''
-            INSERT INTO chat_sessions (session_id, timestamp, name, email, phone, palm_reading, chat_history)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        ''', (session_id, timestamp, req.name, req.email, req.phone, "", "[]"))
+            INSERT INTO chat_sessions (session_id, timestamp, name, email, phone, dob, tob, pob, palm_reading, chat_history)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (session_id, timestamp, req.name, req.email, req.phone, req.dob, req.tob, req.pob, "", "[]"))
         conn.commit()
         conn.close()
         return {"session_id": session_id}
@@ -344,7 +351,7 @@ async def chat_endpoint(req: ChatRequest):
     try:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
-        cursor.execute('SELECT name, chat_history, palm_reading FROM chat_sessions WHERE session_id = ?', (req.session_id,))
+        cursor.execute('SELECT name, dob, tob, pob, chat_history, palm_reading FROM chat_sessions WHERE session_id = ?', (req.session_id,))
         row = cursor.fetchone()
         conn.close()
     except Exception as e:
@@ -354,7 +361,7 @@ async def chat_endpoint(req: ChatRequest):
     if not row:
         raise HTTPException(status_code=404, detail="Session not found")
         
-    name, history_str, palm_reading = row
+    name, dob, tob, pob, history_str, palm_reading = row
     import json
     try:
         history = json.loads(history_str) if history_str else []
@@ -370,6 +377,7 @@ async def chat_endpoint(req: ChatRequest):
         system_prompt = (
             f"You are Sage Samudra, a premium Vedic Astrologer and Palmist. "
             f"You are currently chatting with {name}. "
+            f"Their birth details are: Date of Birth: {dob}, Time of Birth: {tob}, Place of Birth: {pob}. "
             f"If they have scanned their palm, this is their reading:\n\"{palm_reading}\"\n"
             f"Answer the user's questions about their life, career, marriage, or wealth in a wise, mystic, and reassuring tone. "
             f"Keep your answers concise, around 2-3 sentences, so it feels like a live chat conversation."
