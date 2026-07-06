@@ -82,10 +82,10 @@ def log_request(req_id: str, phone: str, status: str, response: str):
         )
         db.add(new_log)
         db.commit()
-    finally:
-        db.close()
     except Exception as e:
         logger.error(f"Failed to log to DB: {e}")
+    finally:
+        db.close()
 
 # Run init on startup
 @app.on_event("startup")
@@ -195,12 +195,12 @@ def start_session(req: SessionStartRequest):
         )
         db.add(new_session)
         db.commit()
-    finally:
-        db.close()
         return {"session_id": session_id}
     except Exception as e:
         logger.error(f"Failed to create session: {e}")
         raise HTTPException(status_code=500, detail=f"Database error: {e}")
+    finally:
+        db.close()
 
 # -------------------------------------------------------------------
 # API Endpoint 1: Process Palm Image
