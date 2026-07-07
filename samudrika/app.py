@@ -415,7 +415,11 @@ async def chat_endpoint(req: ChatRequest):
             response_text = response.text.strip()
         except Exception as e:
             logger.error(f"Chat error: {e}")
-            response_text = f"The stars are temporarily clouded. Error: {str(e)}"
+            error_msg = str(e)
+            if "503" in error_msg or "UNAVAILABLE" in error_msg:
+                response_text = "The cosmic energies are currently overwhelming and Sage Samudra is meditating deeply. Please ask your question again in a few moments."
+            else:
+                response_text = "The stars are temporarily clouded. Please try again."
             
     # 3. Update DB with new history
     history.append({"role": "user", "text": req.message})
