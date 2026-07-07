@@ -214,9 +214,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         sessionStatusBar.classList.remove('hidden');
         
-        // Start 1 minute (60s) free trial
-        appendSystemMessage("🎁 Free trial activated! You have 1 minute to ask Sage Samudra anything.");
-        startCountdown(60);
+        // Start unlimited chat for now
+        appendSystemMessage("🎁 Unlimited cosmic chat activated! Ask Sage Samudra anything.");
+        statusBarTimer.innerText = "⏳ Unlimited";
     });
 
     // Package Selector in Payment Modal
