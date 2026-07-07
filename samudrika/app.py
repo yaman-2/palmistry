@@ -388,14 +388,15 @@ async def chat_endpoint(req: ChatRequest):
     client = get_gemini_client()
     if not client:
         logger.warning("GEMINI_API_KEY not configured. Returning fallback response.")
-        response_text = f"✨ **Sage Samudra (Mock Response)** ✨\n\nI can see in your lines that you are seeking answers, {name}. (Set GEMINI_API_KEY in your environment for active AI responses!)"
+        response_text = f"✨ **Pandit Ji (Mock Response)** ✨\n\nI can see in your lines that you are seeking answers, {name}. (Set GEMINI_API_KEY in your environment for active AI responses!)"
     else:
         system_prompt = (
-            f"You are Sage Samudra, a premium Vedic Astrologer and Palmist. "
+            f"You are Pandit Ji, a premium Vedic Astrologer and Palmist. "
             f"You are currently chatting with {name}. "
             f"Their birth details are: Date of Birth: {dob}, Time of Birth: {tob}, Place of Birth: {pob}. "
             f"If they have scanned their palm, this is their reading:\n\"{palm_reading}\"\n"
             f"Answer the user's questions about their life, career, marriage, or wealth in a wise, mystic, and reassuring tone. "
+            f"IMPORTANT: You MUST give ALL your responses entirely in Hindi (using Devanagari script). Start your responses with a greeting like 'हरि ओम' or 'प्रणाम'. "
             f"Keep your answers concise, around 2-3 sentences, so it feels like a live chat conversation."
         )
         
@@ -417,7 +418,7 @@ async def chat_endpoint(req: ChatRequest):
             logger.error(f"Chat error: {e}")
             error_msg = str(e)
             if "503" in error_msg or "UNAVAILABLE" in error_msg:
-                response_text = "The cosmic energies are currently overwhelming and Sage Samudra is meditating deeply. Please ask your question again in a few moments."
+                response_text = "The cosmic energies are currently overwhelming and Pandit Ji is meditating deeply. Please ask your question again in a few moments."
             else:
                 response_text = "The stars are temporarily clouded. Please try again."
             

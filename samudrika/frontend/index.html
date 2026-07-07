@@ -104,6 +104,34 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.5);
         }
 
+        /* Chat Messages */
+        .chat-msg {
+            padding: 10px 14px;
+            border-radius: 12px;
+            max-width: 85%;
+            word-wrap: break-word;
+            font-size: 0.75rem;
+            line-height: 1.4;
+        }
+        .chat-msg.user {
+            background: linear-gradient(to right, rgba(212, 160, 55, 0.2), rgba(212, 160, 55, 0.3));
+            color: #fff;
+            align-self: flex-end;
+            border-bottom-right-radius: 2px;
+            border: 1px solid rgba(212, 160, 55, 0.4);
+        }
+        .chat-msg.astro {
+            background: linear-gradient(to right, rgba(25, 75, 117, 0.6), rgba(20, 40, 75, 0.8));
+            color: #ffe8a1;
+            align-self: flex-start;
+            border-bottom-left-radius: 2px;
+            border: 1px solid rgba(25, 75, 117, 0.8);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+        .chat-msg strong {
+            color: #d4a037;
+        }
+
         /* Loading Spinner */
         .spinner {
             width: 24px;
@@ -260,12 +288,12 @@
         <div id="chatView" class="w-full flex-col flex-1 mt-2 hidden overflow-hidden h-[500px] z-10">
             <div id="chatWindow" class="w-full glass-input rounded-2xl p-4 overflow-y-auto flex-1 mb-3 reading-scroll space-y-3 flex flex-col justify-start text-xs">
                 <div class="chat-msg system bg-[#d4a037]/10 border border-[#d4a037]/30 rounded-xl p-3 text-[#e0b44c] text-center">
-                    🔮 Sage Samudra is listening. Ask him about your lines, career, love, or health.
+                    🔮 Pandit Ji is listening. Ask him about your lines, career, love, or health.
                 </div>
             </div>
             
             <div class="flex items-center gap-2 mt-auto">
-                <input type="text" id="chatInput" placeholder="Ask Sage Samudra..." class="flex-1 glass-input rounded-xl px-4 py-3 text-sm">
+                <input type="text" id="chatInput" placeholder="Ask Pandit Ji..." class="flex-1 glass-input rounded-xl px-4 py-3 text-sm">
                 <button id="sendChatBtn" class="btn-gold-3d p-3 rounded-xl flex items-center justify-center font-bold text-lg w-12 h-12">
                     ➔
                 </button>
@@ -306,6 +334,6 @@
         
     </div>
 
-    <script src="script.js?v=7"></script>
+    <script src="script.js?v=8"></script>
 </body>
 </html>
