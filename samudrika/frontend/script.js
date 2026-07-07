@@ -337,15 +337,21 @@ document.addEventListener('DOMContentLoaded', () => {
         appendUserMessage(query);
         chatInput.value = '';
 
+        // Initial acknowledging message
+        appendAstroMessage('हरि ओम, मैं आपके ग्रहों और नक्षत्रों की गणना कर रहा हूँ। कृपया कुछ क्षण प्रतीक्षा करें...');
+
         // Show typing indicator
         const typingIndicator = document.createElement('div');
         typingIndicator.className = 'chat-msg astro italic text-gray-500';
-        typingIndicator.innerText = 'Sage is reading the cosmos...';
+        typingIndicator.innerText = 'Pandit Ji is analyzing your chart...';
         chatWindow.appendChild(typingIndicator);
         scrollToBottom();
 
+        // Enforce a minimum 10-second processing delay to feel authentic
+        const minDelayPromise = new Promise(resolve => setTimeout(resolve, 10000));
+
         try {
-            const response = await fetch('/chat', {
+            const fetchPromise = fetch('/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -353,6 +359,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     message: query
                 })
             });
+
+            // Wait for both the 10s delay AND the API response
+            const [response] = await Promise.all([fetchPromise, minDelayPromise]);
 
             // Remove typing indicator
             chatWindow.removeChild(typingIndicator);
