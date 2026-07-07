@@ -10,13 +10,18 @@
         body {
             font-family: 'Inter', sans-serif;
             background-color: #120a05;
-            background-image: radial-gradient(circle at center, #261208 0%, #0d0603 100%);
+            background-image: 
+                linear-gradient(to bottom, rgba(18, 10, 5, 0.7) 0%, rgba(10, 5, 2, 0.95) 100%),
+                url('https://upload.wikimedia.org/wikipedia/commons/f/ff/Kashi_Vishwanath.jpg');
+            background-size: cover;
+            background-position: center;
+            background-blend-mode: multiply;
             color: #ffffff;
         }
         
         .font-cinzel { font-family: 'Cinzel', serif; }
         
-        /* Massive Carved Stone Temple Border with Kashi Vishwanath Background */
+        /* Massive Carved Stone Temple Border */
         .temple-border {
             border: 8px solid #a86c36;
             box-shadow: 
@@ -24,12 +29,7 @@
                 inset 0 0 0 4px #5c3012,
                 inset 0 0 30px rgba(0, 0, 0, 0.9),
                 0 25px 60px rgba(0,0,0,1);
-            background: 
-                linear-gradient(to bottom, rgba(40, 15, 5, 0.85) 0%, rgba(10, 5, 2, 0.98) 100%),
-                url('https://upload.wikimedia.org/wikipedia/commons/f/ff/Kashi_Vishwanath.jpg');
-            background-size: cover;
-            background-position: center top;
-            background-blend-mode: multiply;
+            background: radial-gradient(circle at 50% 40%, rgba(45, 20, 8, 0.95) 0%, rgba(15, 5, 2, 0.98) 100%);
             position: relative;
         }
         
