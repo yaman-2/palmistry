@@ -44,23 +44,79 @@ document.addEventListener('DOMContentLoaded', () => {
     let chatHistory = [];
     let isFreeTrialUsed = false;
     
-    // TEMPORARY: Clear session so we can test the new DOB/TOB fields
-    localStorage.removeItem('samudrika_session_id');
-    
     let sessionId = localStorage.getItem('samudrika_session_id') || null;
 
-    // Check session on load
-    if (sessionId) {
-        registerView.classList.add('hidden');
-        registerView.classList.remove('flex');
-        mainView.classList.remove('hidden');
-        mainView.classList.add('flex');
-    } else {
+    // Async Init Function to restore cache/autosave
+    const initApp = async () => {
+        if (sessionId) {
+            try {
+                const res = await fetch(`/session/${sessionId}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    
+                    // Hide register view
+                    registerView.classList.add('hidden');
+                    registerView.classList.remove('flex');
+                    
+                    // If palm reading exists, go straight to results view
+                    if (data.palm_reading) {
+                        mainView.classList.add('hidden');
+                        mainView.classList.remove('flex');
+                        
+                        resultsView.classList.remove('hidden');
+                        resultsView.classList.add('flex');
+                        
+                        readingContent.innerHTML = data.palm_reading.replace(/\n/g, '<br><br>');
+                    } else {
+                        mainView.classList.remove('hidden');
+                        mainView.classList.add('flex');
+                    }
+                    
+                    // If chat history exists, restore it
+                    if (data.chat_history && data.chat_history.length > 0) {
+                        chatHistory = data.chat_history;
+                        // Clear default system message if history exists
+                        chatWindow.innerHTML = ''; 
+                        
+                        chatHistory.forEach(msg => {
+                            if (msg.role === 'user') {
+                                appendUserMessage(msg.text);
+                            } else {
+                                appendAstroMessage(msg.text);
+                            }
+                        });
+                        
+                        // If chat was active, go straight to chat view
+                        resultsView.classList.add('hidden');
+                        resultsView.classList.remove('flex');
+                        chatView.classList.remove('hidden');
+                        chatView.classList.add('flex');
+                        sessionStatusBar.classList.remove('hidden');
+                    }
+                } else {
+                    // Session invalid, clear it
+                    localStorage.removeItem('samudrika_session_id');
+                    sessionId = null;
+                    showRegisterView();
+                }
+            } catch (e) {
+                console.error("Cache load failed", e);
+                showRegisterView();
+            }
+        } else {
+            showRegisterView();
+        }
+    };
+
+    const showRegisterView = () => {
         registerView.classList.remove('hidden');
         registerView.classList.add('flex');
         mainView.classList.add('hidden');
         mainView.classList.remove('flex');
-    }
+    };
+
+    // Run init
+    initApp();
 
     // Handle Profile Registration Submit
     submitRegBtn.addEventListener('click', async () => {

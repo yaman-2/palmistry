@@ -436,3 +436,28 @@ async def chat_endpoint(req: ChatRequest):
         
     return {"response": response_text}
 
+@app.get("/session/{session_id}")
+async def get_session(session_id: str):
+    db = SessionLocal()
+    try:
+        session = db.query(ChatSession).filter(ChatSession.session_id == session_id).first()
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+            
+        import json
+        history = []
+        if session.chat_history:
+            try:
+                history = json.loads(session.chat_history)
+            except:
+                pass
+                
+        return {
+            "name": session.name,
+            "palm_reading": session.palm_reading,
+            "chat_history": history
+        }
+    finally:
+        db.close()
+
+
