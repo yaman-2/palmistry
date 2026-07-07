@@ -5,75 +5,103 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Samudrika - Premium UI</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        /* Deep Space / Cosmic Background */
         body {
-            background: radial-gradient(circle at 50% 50%, #f9eac3 0%, #d4b882 100%);
+            font-family: 'Inter', sans-serif;
+            background-color: #0b132b;
+            background-image: radial-gradient(circle at center, #132a4a 0%, #060b17 100%);
+            color: #ffffff;
         }
+        
+        .font-cinzel { font-family: 'Cinzel', serif; }
         
         /* 3D Temple Gold Frame */
         .temple-border {
-            border: 2px solid #b47c2b;
+            border: 3px solid #d4a037;
             box-shadow: 
-                0 0 30px rgba(180, 124, 43, 0.3), 
-                inset 0 0 40px rgba(180, 124, 43, 0.15),
-                0 20px 50px rgba(0,0,0,0.8);
-            background: linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(245,235,210,0.85) 100%);
-            backdrop-filter: blur(10px);
+                0 0 40px rgba(212, 160, 55, 0.4), 
+                inset 0 0 30px rgba(212, 160, 55, 0.2),
+                inset 0 0 5px rgba(255, 255, 255, 0.5),
+                0 20px 50px rgba(0,0,0,0.9);
+            background: radial-gradient(circle at 50% 40%, rgba(20,40,75,0.9) 0%, rgba(5,10,20,0.95) 100%);
+            position: relative;
+        }
+        
+        /* Add inner corner decorations */
+        .temple-border::before, .temple-border::after {
+            content: '';
+            position: absolute;
+            width: 100%; height: 100%;
+            top: 0; left: 0;
+            pointer-events: none;
+            border: 1px solid rgba(212, 160, 55, 0.5);
+            margin: 6px;
+            width: calc(100% - 12px);
+            height: calc(100% - 12px);
+            border-radius: 2.2rem;
+            z-index: 0;
         }
 
         /* Metallic Gold Text */
-        .text-theme-blue {
-            color: #194b75;
-            
-            
+        .text-gold-gradient {
+            background: linear-gradient(to bottom, #fff3c7 0%, #e0b44c 50%, #b8860b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0px 2px 4px rgba(0,0,0,0.5);
         }
 
         /* Vedic Clock Animations */
         .vedic-ring-1 {
-            border: 1px solid rgba(25, 75, 117, 0.4);
+            border: 2px solid rgba(212, 160, 55, 0.5);
+            box-shadow: inset 0 0 20px rgba(212,160,55,0.2), 0 0 20px rgba(212,160,55,0.2);
             animation: spin 30s linear infinite;
         }
         .vedic-ring-2 {
-            border: 2px dashed rgba(25, 75, 117, 0.6);
+            border: 2px dashed rgba(212, 160, 55, 0.7);
             animation: spin-reverse 20s linear infinite;
         }
         .vedic-ring-3 {
-            border: 1px dotted rgba(25, 75, 117, 0.8);
+            border: 2px dotted rgba(212, 160, 55, 0.9);
             animation: spin 40s linear infinite;
         }
 
         /* Mystical Hand Pulse */
         .mystic-hand {
-            filter: drop-shadow(0 0 25px rgba(14, 165, 233, 0.9));
+            filter: drop-shadow(0 0 20px rgba(0, 200, 255, 0.8)) drop-shadow(0 0 40px rgba(0, 100, 255, 0.6));
             animation: pulse-glow 3s ease-in-out infinite;
         }
 
         @keyframes spin { 100% { transform: translate(-50%, -50%) rotate(360deg); } }
         @keyframes spin-reverse { 100% { transform: translate(-50%, -50%) rotate(-360deg); } }
         @keyframes pulse-glow {
-            0%, 100% { filter: drop-shadow(0 0 15px rgba(14, 165, 233, 0.6)); transform: translate(-50%, -50%) scale(1); }
-            50% { filter: drop-shadow(0 0 35px rgba(14, 165, 233, 1)); transform: translate(-50%, -50%) scale(1.05); }
+            0%, 100% { filter: drop-shadow(0 0 20px rgba(0, 200, 255, 0.8)); transform: translate(-50%, -50%) scale(1); }
+            50% { filter: drop-shadow(0 0 40px rgba(0, 255, 255, 1)); transform: translate(-50%, -50%) scale(1.05); }
         }
 
         /* 3D Button */
-        .btn-blue {
-            background: linear-gradient(135deg, #2b70a8 0%, #10304f 100%);
-            box-shadow: 0 4px 15px rgba(16, 48, 79, 0.4), inset 0 2px 0 rgba(255,255,255,0.3);
-            transition: all 0.3s ease;
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+        .btn-gold-3d {
+            background: linear-gradient(to bottom, #ffe8a1 0%, #d4a037 40%, #9b6814 100%);
+            border: 1px solid #ffd700;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5), inset 0 2px 2px rgba(255,255,255,0.8), inset 0 -2px 5px rgba(0,0,0,0.4);
+            color: #3b1b00;
+            text-shadow: 0 1px 1px rgba(255,255,255,0.4);
+            transition: all 0.2s ease;
         }
-        .btn-blue:active {
+        .btn-gold-3d:active {
             transform: translateY(2px);
-            box-shadow: 0 2px 5px rgba(16, 48, 79, 0.4), inset 0 2px 0 rgba(0,0,0,0.1);
+            box-shadow: 0 1px 5px rgba(0,0,0,0.5), inset 0 2px 5px rgba(0,0,0,0.6);
         }
-        .btn-blue:disabled {
+        .btn-gold-3d:disabled {
             opacity: 0.7;
             cursor: not-allowed;
             transform: none;
+        }
+        
+        .cashback-pill {
+            background: linear-gradient(to right, rgba(20,40,75,0.9), rgba(5,10,20,0.9));
+            border: 1px solid rgba(212, 160, 55, 0.6);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
         }
 
         /* Loading Spinner */
@@ -82,7 +110,7 @@
             height: 24px;
             border: 3px solid rgba(255,255,255,0.3);
             border-radius: 50%;
-            border-top-color: #fff;
+            border-top-color: #3b1b00;
             animation: spin-fast 1s ease-in-out infinite;
             position: absolute;
             display: none;
@@ -91,182 +119,185 @@
             to { transform: rotate(360deg); }
         }
 
-        /* Scrollbar for reading content */
-        .reading-scroll::-webkit-scrollbar {
-            width: 4px;
+        /* Inputs */
+        .glass-input {
+            background: rgba(10, 20, 40, 0.6);
+            border: 1px solid rgba(212, 160, 55, 0.3);
+            color: #fff;
+            transition: border 0.3s;
         }
-        .reading-scroll::-webkit-scrollbar-thumb {
-            background-color: rgba(25, 75, 117, 0.5);
-            border-radius: 10px;
+        .glass-input:focus {
+            border-color: #d4a037;
+            outline: none;
+            box-shadow: 0 0 10px rgba(212, 160, 55, 0.2);
         }
+        
+        .reading-scroll::-webkit-scrollbar { width: 4px; }
+        .reading-scroll::-webkit-scrollbar-thumb { background-color: rgba(212, 160, 55, 0.5); border-radius: 10px; }
     </style>
 </head>
-<body class="text-slate-900 min-h-screen flex items-center justify-center font-sans p-4 antialiased">
+<body class="min-h-screen flex items-center justify-center p-4 antialiased">
 
     <!-- Mobile Device Mockup Container -->
-    <div class="relative w-full max-w-[380px] h-[800px] rounded-[2.5rem] temple-border overflow-hidden flex flex-col items-center justify-between py-12 px-6">
+    <div class="relative w-full max-w-[380px] h-[800px] rounded-[2.5rem] temple-border flex flex-col items-center justify-between py-10 px-5 overflow-hidden">
         
         <!-- Header -->
         <div class="text-center z-10 w-full mt-2">
-            <h1 class="text-4xl font-extrabold text-theme-blue tracking-widest uppercase cursor-pointer" id="logoTitle">Samudrika</h1>
-            <p class="text-xs text-[#194b75] mt-2 font-medium tracking-wide uppercase">Ancient Wisdom • Modern Tech</p>
+            <h1 class="text-4xl font-cinzel font-extrabold text-gold-gradient tracking-wider cursor-pointer" id="logoTitle">SAMUDRIKA</h1>
+            <p class="text-[10px] text-[#d4a037] mt-1 font-medium tracking-[0.2em] uppercase">Palmistry • Destiny Reading</p>
             
             <!-- Active Session Status Bar -->
-            <div id="sessionStatusBar" class="hidden flex items-center justify-between bg-white/40 border border-[#194b75]/20 rounded-xl px-4 py-2 mt-3 text-xs font-semibold text-theme-blue">
+            <div id="sessionStatusBar" class="hidden flex items-center justify-between bg-black/60 border border-[#d4a037]/30 rounded-full px-4 py-2 mt-4 text-xs font-semibold text-[#ffe8a1]">
                 <span id="statusBarLabel">🔮 Session Active</span>
                 <span id="statusBarTimer">⏳ 05:00</span>
             </div>
         </div>
 
         <!-- REGISTRATION VIEW (Shown by default) -->
-        <div id="registerView" class="w-full flex flex-col items-center justify-between flex-1 mt-6">
+        <div id="registerView" class="w-full flex flex-col items-center justify-between flex-1 mt-6 z-10">
             <div class="w-full space-y-4 my-auto">
                 <div class="text-center space-y-2 mb-6">
-                    <h2 class="text-2xl font-bold text-theme-blue">Create Destiny Profile</h2>
-                    <p class="text-xs text-slate-600 px-4">Enter your details to unlock your customized palm reading and chat with the Sage.</p>
+                    <h2 class="text-xl font-cinzel font-bold text-[#e0b44c]">Create Destiny Profile</h2>
+                    <p class="text-xs text-gray-400 px-2">Enter your birth details to align with the cosmos.</p>
                 </div>
                 
-                <div class="space-y-4">
+                <div class="space-y-3">
                     <div class="space-y-1">
-                        <label class="text-[10px] uppercase tracking-wider text-[#194b75] font-semibold">Your Full Name</label>
-                        <input type="text" id="regName" placeholder="e.g. Yaman Saraswat" class="w-full bg-white/60 border border-[#194b75]/30 rounded-xl px-4 py-3 text-sm text-slate-900 focus:outline-none focus:border-[#194b75] placeholder-slate-500">
+                        <label class="text-[9px] uppercase tracking-wider text-[#d4a037] font-semibold">Your Full Name</label>
+                        <input type="text" id="regName" placeholder="e.g. Yaman Saraswat" class="w-full glass-input rounded-xl px-4 py-3 text-sm placeholder-gray-500">
                     </div>
                     <div class="space-y-1">
-                        <label class="text-[10px] uppercase tracking-wider text-[#194b75] font-semibold">Email Address</label>
-                        <input type="email" id="regEmail" placeholder="e.g. yaman@example.com" class="w-full bg-white/60 border border-[#194b75]/30 rounded-xl px-4 py-3 text-sm text-slate-900 focus:outline-none focus:border-[#194b75] placeholder-slate-500">
+                        <label class="text-[9px] uppercase tracking-wider text-[#d4a037] font-semibold">Email Address</label>
+                        <input type="email" id="regEmail" placeholder="e.g. yaman@example.com" class="w-full glass-input rounded-xl px-4 py-3 text-sm placeholder-gray-500">
                     </div>
                     <div class="space-y-1">
-                        <label class="text-[10px] uppercase tracking-wider text-[#194b75] font-semibold">Phone Number</label>
-                        <input type="tel" id="regPhone" placeholder="e.g. +91 9999999999" class="w-full bg-white/60 border border-[#194b75]/30 rounded-xl px-4 py-3 text-sm text-slate-900 focus:outline-none focus:border-[#194b75] placeholder-slate-500">
+                        <label class="text-[9px] uppercase tracking-wider text-[#d4a037] font-semibold">Phone Number</label>
+                        <input type="tel" id="regPhone" placeholder="e.g. +91 9999999999" class="w-full glass-input rounded-xl px-4 py-3 text-sm placeholder-gray-500">
                     </div>
                     
                     <div class="grid grid-cols-2 gap-3">
                         <div class="space-y-1">
-                            <label class="text-[10px] uppercase tracking-wider text-[#194b75] font-semibold">Date of Birth</label>
-                            <input type="date" id="regDob" class="w-full bg-white/60 border border-[#194b75]/30 rounded-xl px-4 py-3 text-sm text-slate-900 focus:outline-none focus:border-[#194b75] placeholder-slate-500">
+                            <label class="text-[9px] uppercase tracking-wider text-[#d4a037] font-semibold">Date of Birth</label>
+                            <input type="date" id="regDob" class="w-full glass-input rounded-xl px-4 py-3 text-sm text-gray-300">
                         </div>
                         <div class="space-y-1">
-                            <label class="text-[10px] uppercase tracking-wider text-[#194b75] font-semibold">Time of Birth</label>
-                            <input type="time" id="regTob" class="w-full bg-white/60 border border-[#194b75]/30 rounded-xl px-4 py-3 text-sm text-slate-900 focus:outline-none focus:border-[#194b75] placeholder-slate-500">
+                            <label class="text-[9px] uppercase tracking-wider text-[#d4a037] font-semibold">Time of Birth</label>
+                            <input type="time" id="regTob" class="w-full glass-input rounded-xl px-4 py-3 text-sm text-gray-300">
                         </div>
                     </div>
                     
                     <div class="space-y-1">
-                        <label class="text-[10px] uppercase tracking-wider text-[#194b75] font-semibold">Place of Birth</label>
-                        <input type="text" id="regPob" placeholder="e.g. New Delhi, India" class="w-full bg-white/60 border border-[#194b75]/30 rounded-xl px-4 py-3 text-sm text-slate-900 focus:outline-none focus:border-[#194b75] placeholder-slate-500">
+                        <label class="text-[9px] uppercase tracking-wider text-[#d4a037] font-semibold">Place of Birth</label>
+                        <input type="text" id="regPob" placeholder="e.g. New Delhi, India" class="w-full glass-input rounded-xl px-4 py-3 text-sm placeholder-gray-500">
                     </div>
                 </div>
             </div>
             
-            <div class="w-full mt-auto mb-4">
-                <button id="submitRegBtn" class="w-full py-4 rounded-2xl btn-blue text-slate-900 font-extrabold text-md tracking-wide uppercase focus:outline-none">
-                    Start Cosmic Journey
+            <div class="w-full mt-auto mb-2 flex flex-col items-center">
+                <div class="cashback-pill px-4 py-1.5 rounded-full mb-3 flex items-center justify-center gap-1 z-20">
+                    <span class="text-[10px] text-[#ffe8a1]">₹11 Referral Cashback Available 🌟</span>
+                </div>
+                <button id="submitRegBtn" class="w-full py-4 rounded-2xl btn-gold-3d font-extrabold text-sm tracking-widest uppercase">
+                    Begin Journey
                 </button>
             </div>
         </div>
 
         <!-- MAIN VIEW: Centerpiece: Clock & Hand (Hidden by default) -->
-        <div id="mainView" class="w-full flex-col items-center justify-between flex-1 hidden">
-            <div class="relative w-80 h-80 my-8">
+        <div id="mainView" class="w-full flex-col items-center justify-between flex-1 hidden z-10">
+            <div class="relative w-full h-80 my-8 flex items-center justify-center">
                 <!-- Rotating Rings -->
-                <div class="absolute top-1/2 left-1/2 w-72 h-72 rounded-full vedic-ring-1 transform -translate-x-1/2 -translate-y-1/2"></div>
-                <div class="absolute top-1/2 left-1/2 w-56 h-56 rounded-full vedic-ring-2 transform -translate-x-1/2 -translate-y-1/2"></div>
-                <div class="absolute top-1/2 left-1/2 w-40 h-40 rounded-full vedic-ring-3 transform -translate-x-1/2 -translate-y-1/2"></div>
+                <div class="absolute top-1/2 left-1/2 w-[280px] h-[280px] rounded-full vedic-ring-1 transform -translate-x-1/2 -translate-y-1/2"></div>
+                <div class="absolute top-1/2 left-1/2 w-[220px] h-[220px] rounded-full vedic-ring-2 transform -translate-x-1/2 -translate-y-1/2"></div>
+                <div class="absolute top-1/2 left-1/2 w-[160px] h-[160px] rounded-full vedic-ring-3 transform -translate-x-1/2 -translate-y-1/2"></div>
                 
                 <!-- Glowing Core -->
-                <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full bg-sky-500/10 blur-xl"></div>
+                <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-40 h-40 rounded-full bg-cyan-500/20 blur-2xl"></div>
+                <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-20 h-20 rounded-full bg-blue-600/40 blur-xl"></div>
 
                 <!-- Central Hand Icon -->
-                <div class="absolute top-1/2 left-1/2 mystic-hand text-7xl text-sky-300 pointer-events-none">
-                    ✋🏽
+                <div class="absolute top-1/2 left-1/2 mystic-hand text-7xl text-cyan-200 pointer-events-none drop-shadow-[0_0_15px_rgba(0,255,255,0.8)]">
+                    ✋🏼
                 </div>
             </div>
 
             <!-- Bottom Action Area -->
-            <div class="w-full z-10 text-center space-y-5 mb-4 mt-auto">
-                <h2 class="text-xl text-sky-50 font-light px-2 drop-shadow-lg">What do the lines on your hands say about your future?</h2>
+            <div class="w-full text-center space-y-4 mb-2 mt-auto">
+                <h2 class="text-lg text-gray-200 font-light px-2">Unveil the secrets of your palm</h2>
                 
-                <!-- Trust Badge / Offer -->
-                <div class="bg-white/40 border border-[#194b75]/30 rounded-xl p-3 backdrop-blur-sm">
-                    <p class="text-[#194b75] text-sm font-semibold">✨ Get your detailed reading for just ₹51</p>
-                </div>
-
-                <!-- Hidden form for API integration -->
                 <input type="file" id="imageInput" accept="image/*" hidden>
                 
-                <!-- CTA Button -->
-                <button id="scanBtn" class="w-full py-4 rounded-2xl btn-blue text-slate-900 font-extrabold text-lg tracking-wide uppercase">
-                    <span id="scanBtnText">Scan Your Palm Now</span>
-                    <div class="spinner" id="spinner"></div>
-                </button>
-                <p class="text-[10px] text-slate-600">100% Private & Secure</p>
+                <div class="flex flex-col items-center w-full">
+                    <div class="cashback-pill px-4 py-1.5 rounded-full mb-3 flex items-center justify-center gap-1">
+                        <span class="text-[10px] text-[#ffe8a1]">₹11 Referral Cashback Available 🌟</span>
+                    </div>
+                    
+                    <button id="scanBtn" class="w-full py-4 rounded-2xl btn-gold-3d font-extrabold text-sm tracking-widest uppercase">
+                        <span id="scanBtnText">DISCOVER YOUR DESTINY (₹51)</span>
+                        <div class="spinner" id="spinner"></div>
+                    </button>
+                </div>
             </div>
         </div>
 
         <!-- RESULTS VIEW (Hidden by default) -->
-        <div id="resultsView" class="w-full flex-col items-center flex-1 mt-6 hidden">
-            <div class="w-full bg-white/40 border border-[#194b75]/30 rounded-2xl p-5 backdrop-blur-sm mb-4 h-[380px] flex flex-col">
-                <h3 class="text-theme-blue text-xl font-bold mb-4 text-center">Your Cosmic Reading</h3>
-                <div id="readingContent" class="text-sm text-slate-700 leading-relaxed overflow-y-auto reading-scroll flex-1 pr-2">
-                    <!-- Reading will appear here -->
-                </div>
+        <div id="resultsView" class="w-full flex-col items-center flex-1 mt-4 hidden z-10">
+            <div class="w-full bg-[#060b17]/80 border border-[#d4a037]/40 rounded-2xl p-4 backdrop-blur-md mb-4 h-[400px] flex flex-col shadow-[0_0_20px_rgba(212,160,55,0.1)]">
+                <h3 class="text-gold-gradient font-cinzel text-lg font-bold mb-3 text-center border-b border-[#d4a037]/20 pb-2">Your Cosmic Reading</h3>
+                <div id="readingContent" class="text-xs text-gray-300 leading-relaxed overflow-y-auto reading-scroll flex-1 pr-2"></div>
             </div>
             
-            <button id="chatOptionBtn" class="w-full py-4 rounded-2xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-slate-900 font-extrabold text-md tracking-wide uppercase transition-all duration-300 shadow-lg shadow-sky-950/40">
+            <button id="chatOptionBtn" class="w-full py-3 rounded-2xl btn-gold-3d font-extrabold text-xs tracking-widest uppercase mb-3">
                 💬 Chat with Astrologer (1 Min Free)
             </button>
             
-            <button id="resetBtn" class="w-full py-3 rounded-2xl btn-blue text-slate-900 font-extrabold text-sm tracking-wide uppercase mt-3">
+            <button id="resetBtn" class="w-full py-3 rounded-2xl border border-[#d4a037]/40 bg-[#060b17]/50 text-gray-300 font-bold text-xs tracking-wider uppercase mt-1">
                 Scan Another Palm
             </button>
         </div>
 
         <!-- CHAT VIEW (Hidden by default) -->
-        <div id="chatView" class="w-full flex-col flex-1 mt-4 hidden overflow-hidden h-[480px]">
-            <!-- Chat Messages Window -->
-            <div id="chatWindow" class="w-full bg-white/40 border border-[#194b75]/30 rounded-2xl p-4 backdrop-blur-sm overflow-y-auto flex-1 mb-3 reading-scroll space-y-3 flex flex-col justify-start">
-                <div class="chat-msg system bg-[#194b75]/10 border border-[#194b75]/20 rounded-xl p-3 text-xs text-[#194b75] text-center">
+        <div id="chatView" class="w-full flex-col flex-1 mt-2 hidden overflow-hidden h-[500px] z-10">
+            <div id="chatWindow" class="w-full glass-input rounded-2xl p-4 overflow-y-auto flex-1 mb-3 reading-scroll space-y-3 flex flex-col justify-start text-xs">
+                <div class="chat-msg system bg-[#d4a037]/10 border border-[#d4a037]/30 rounded-xl p-3 text-[#e0b44c] text-center">
                     🔮 Sage Samudra is listening. Ask him about your lines, career, love, or health.
                 </div>
             </div>
             
-            <!-- Chat Input Area -->
             <div class="flex items-center gap-2 mt-auto">
-                <input type="text" id="chatInput" placeholder="Ask Sage Samudra..." class="flex-1 bg-white/60 border border-[#194b75]/30 rounded-xl px-4 py-3 text-sm text-slate-900 focus:outline-none focus:border-[#194b75] placeholder-gray-500">
-                <button id="sendChatBtn" class="bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-slate-900 p-3 rounded-xl flex items-center justify-center font-bold text-sm">
+                <input type="text" id="chatInput" placeholder="Ask Sage Samudra..." class="flex-1 glass-input rounded-xl px-4 py-3 text-sm">
+                <button id="sendChatBtn" class="btn-gold-3d p-3 rounded-xl flex items-center justify-center font-bold text-lg w-12 h-12">
                     ➔
                 </button>
             </div>
         </div>
         
         <!-- PAYMENT MODAL (Hidden by default) -->
-        <div id="paymentModal" class="absolute inset-0 bg-black/60 z-50 flex flex-col items-center justify-center px-6 text-center hidden">
-            <div class="bg-[#f4ebd8] border border-[#194b75]/40 rounded-3xl p-5 w-full max-w-[320px] shadow-2xl relative">
-                <h3 id="modalTitle" class="text-lg font-bold text-theme-blue mb-1">Unlock Cosmic Chat</h3>
-                <p id="modalSubtitle" class="text-[11px] text-slate-600 mb-3">Choose a package & scan the QR to pay</p>
+        <div id="paymentModal" class="absolute inset-0 bg-black/80 z-50 flex flex-col items-center justify-center px-6 text-center hidden backdrop-blur-sm">
+            <div class="bg-[#0b132b] border-2 border-[#d4a037] rounded-3xl p-5 w-full max-w-[320px] shadow-[0_0_40px_rgba(212,160,55,0.3)] relative">
+                <h3 id="modalTitle" class="text-xl font-cinzel font-bold text-gold-gradient mb-1">Unlock Cosmic Chat</h3>
+                <p id="modalSubtitle" class="text-[11px] text-gray-400 mb-4">Choose a package & scan the QR to pay</p>
                 
-                <!-- Package Selector -->
-                <div class="flex gap-2 mb-3">
-                    <button id="pack51Btn" class="flex-1 py-2 px-1 rounded-xl border border-[#194b75] bg-[#194b75]/20 text-slate-900 text-xs font-bold transition-all focus:outline-none">
-                        ₹51 Pack<br><span class="text-[9px] font-normal text-[#306c9e]">5 Mins Chat</span>
+                <div class="flex gap-2 mb-4">
+                    <button id="pack51Btn" class="flex-1 py-3 px-1 rounded-xl border-2 border-[#d4a037] bg-[#d4a037]/20 text-[#ffe8a1] text-xs font-bold transition-all focus:outline-none">
+                        ₹51 Pack<br><span class="text-[9px] font-normal text-gray-300">5 Mins Chat</span>
                     </button>
-                    <button id="pack21Btn" class="flex-1 py-2 px-1 rounded-xl border border-[#194b75]/30 bg-transparent text-slate-600 text-xs font-bold transition-all focus:outline-none">
+                    <button id="pack21Btn" class="flex-1 py-3 px-1 rounded-xl border border-[#d4a037]/30 bg-black/40 text-gray-400 text-xs font-bold transition-all focus:outline-none">
                         ₹21 Pack<br><span class="text-[9px] font-normal text-gray-500">2 Mins Chat</span>
                     </button>
                 </div>
                 
-                <!-- QR Code Image -->
-                <div class="relative w-40 h-40 mx-auto bg-white rounded-2xl overflow-hidden p-2 shadow-lg border border-[#194b75]/20 mb-3">
+                <div class="relative w-36 h-36 mx-auto bg-white rounded-xl overflow-hidden p-2 mb-4 ring-2 ring-[#d4a037]/50 ring-offset-4 ring-offset-[#0b132b]">
                     <img src="assets/payment_qr.png" alt="Payment QR Code" class="w-full h-full object-contain">
                 </div>
                 
-                <p class="text-[10px] text-[#194b75] font-semibold mb-4">✨ Instant Activation after scan</p>
+                <p class="text-[10px] text-[#e0b44c] font-semibold mb-4">✨ Instant Activation after scan</p>
                 
                 <div class="flex flex-col gap-2">
-                    <button id="confirmPayBtn" class="w-full py-3 rounded-xl btn-blue text-slate-900 font-extrabold text-xs tracking-wide uppercase focus:outline-none">
+                    <button id="confirmPayBtn" class="w-full py-3 rounded-xl btn-gold-3d font-extrabold text-xs tracking-widest uppercase">
                         Simulate Success (₹51)
                     </button>
-                    <button id="cancelPayBtn" class="w-full py-3 rounded-xl bg-gray-900 text-slate-600 font-bold text-xs tracking-wide uppercase hover:bg-gray-800 focus:outline-none">
+                    <button id="cancelPayBtn" class="w-full py-3 rounded-xl border border-gray-600 bg-gray-900/50 text-gray-400 font-bold text-xs tracking-wider uppercase mt-1">
                         Cancel
                     </button>
                 </div>
@@ -275,6 +306,6 @@
         
     </div>
 
-    <script src="script.js?v=4"></script>
+    <script src="script.js?v=6"></script>
 </body>
 </html>
