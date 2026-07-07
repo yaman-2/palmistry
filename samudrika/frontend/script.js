@@ -9,6 +9,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const regName = document.getElementById('regName');
     const regEmail = document.getElementById('regEmail');
     const regPhone = document.getElementById('regPhone');
+    const regDob = document.getElementById('regDob');
+    const regTob = document.getElementById('regTob');
+    const regPob = document.getElementById('regPob');
     const submitRegBtn = document.getElementById('submitRegBtn');
 
     const mainView = document.getElementById('mainView');
@@ -41,8 +44,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let chatHistory = [];
     let isFreeTrialUsed = false;
     
-    // TEMPORARY: Clear session so we can test the new fields
-    // localStorage.removeItem('samudrika_session_id');
+    // TEMPORARY: Clear session so we can test the new DOB/TOB fields
+    localStorage.removeItem('samudrika_session_id');
     
     let sessionId = localStorage.getItem('samudrika_session_id') || null;
 
@@ -64,9 +67,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const name = regName.value.trim();
         const email = regEmail.value.trim();
         const phone = regPhone.value.trim();
+        const dob = regDob.value.trim();
+        const tob = regTob.value.trim();
+        const pob = regPob.value.trim();
 
-        if (!name || !email || !phone) {
-            alert('Please fill in all details to proceed.');
+        if (!name || !email || !phone || !dob || !tob || !pob) {
+            alert('Please fill in all details (including date, time, and place of birth) to proceed.');
             return;
         }
 
@@ -83,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch('/start_session', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, phone })
+                body: JSON.stringify({ name, email, phone, dob, tob, pob })
             });
 
             if (!response.ok) {

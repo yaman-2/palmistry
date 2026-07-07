@@ -59,6 +59,9 @@ class ChatSession(Base):
     name = Column(String)
     email = Column(String)
     phone = Column(String)
+    dob = Column(String)
+    tob = Column(String)
+    pob = Column(String)
     palm_reading = Column(String)
     chat_history = Column(String)
 
@@ -169,6 +172,9 @@ class SessionStartRequest(BaseModel):
     name: str
     email: str
     phone: str
+    dob: str
+    tob: str
+    pob: str
 
 @app.post("/start_session")
 def start_session(req: SessionStartRequest):
@@ -181,6 +187,9 @@ def start_session(req: SessionStartRequest):
             name=req.name,
             email=req.email,
             phone=req.phone,
+            dob=req.dob,
+            tob=req.tob,
+            pob=req.pob,
             palm_reading="",
             chat_history="[]"
         )
@@ -363,6 +372,9 @@ async def chat_endpoint(req: ChatRequest):
         raise HTTPException(status_code=404, detail="Session not found")
         
     name = session.name
+    dob = session.dob
+    tob = session.tob
+    pob = session.pob
     palm_reading = session.palm_reading
     history_str = session.chat_history
     
@@ -381,6 +393,7 @@ async def chat_endpoint(req: ChatRequest):
         system_prompt = (
             f"You are Sage Samudra, a premium Vedic Astrologer and Palmist. "
             f"You are currently chatting with {name}. "
+            f"Their birth details are: Date of Birth: {dob}, Time of Birth: {tob}, Place of Birth: {pob}. "
             f"If they have scanned their palm, this is their reading:\n\"{palm_reading}\"\n"
             f"Answer the user's questions about their life, career, marriage, or wealth in a wise, mystic, and reassuring tone. "
             f"Keep your answers concise, around 2-3 sentences, so it feels like a live chat conversation."
