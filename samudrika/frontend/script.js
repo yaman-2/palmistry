@@ -50,6 +50,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let isFreeTrialUsed = false;
     
     let sessionId = localStorage.getItem('samudrika_session_id') || null;
+    
+    // Check for clear_cache parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('clear_cache') === '1') {
+        localStorage.removeItem('samudrika_session_id');
+        sessionId = null;
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
 
     // Async Init Function to restore cache/autosave
     const initApp = async () => {
