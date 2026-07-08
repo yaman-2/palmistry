@@ -145,6 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const dob = regDob.value.trim();
         const tob = regTob.value.trim();
         const pob = regPob.value.trim();
+        const referral_code = document.getElementById('regReferral').value.trim();
 
         if (!name || !email || !phone || !dob || !tob || !pob) {
             alert('Please fill in all details (including date, time, and place of birth) to proceed.');
@@ -164,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch('/start_session', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, phone, dob, tob, pob })
+                body: JSON.stringify({ name, email, phone, dob, tob, pob, referral_code })
             });
 
             if (!response.ok) {
@@ -308,9 +309,13 @@ document.addEventListener('DOMContentLoaded', () => {
         
         sessionStatusBar.classList.remove('hidden');
         
-        // Start unlimited chat for now
-        appendSystemMessage("🎁 Unlimited cosmic chat activated! Ask Pandit Ji anything.");
-        statusBarTimer.innerText = "⏳ Unlimited";
+        if (!isFreeTrialUsed && timeRemaining <= 0) {
+            appendSystemMessage("🎁 1-Minute Free Trial activated! Ask Pandit Ji anything.");
+            startCountdown(60);
+            isFreeTrialUsed = true;
+        } else if (timeRemaining <= 0) {
+            lockChatSession();
+        }
     });
 
     // Package Selector in Payment Modal

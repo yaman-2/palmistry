@@ -69,6 +69,7 @@ class ChatSession(Base):
     dob = Column(String)
     tob = Column(String)
     pob = Column(String)
+    referral_code = Column(String, nullable=True)
     palm_reading = Column(String)
     chat_history = Column(String)
 
@@ -186,6 +187,7 @@ class SessionStartRequest(BaseModel):
     dob: str
     tob: str
     pob: str
+    referral_code: Optional[str] = None
 
 @app.post("/start_session")
 def start_session(req: SessionStartRequest):
@@ -201,6 +203,7 @@ def start_session(req: SessionStartRequest):
             dob=req.dob,
             tob=req.tob,
             pob=req.pob,
+            referral_code=req.referral_code,
             palm_reading="",
             chat_history="[]"
         )
