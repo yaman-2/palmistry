@@ -36,7 +36,14 @@ app = FastAPI(title="Samudrika API", description="API Middleware for Palm Readin
 # -------------------------------------------------------------------
 # Database Setup
 # -------------------------------------------------------------------
-DATABASE_URL = os.getenv("POSTGRES_URL", "sqlite:///samudrika.db")
+DATABASE_URL = os.getenv("POSTGRES_URL")
+if not DATABASE_URL:
+    # Use /tmp for SQLite on Vercel as root is read-only
+    if os.getenv("VERCEL"):
+        DATABASE_URL = "sqlite:////tmp/samudrika.db"
+    else:
+        DATABASE_URL = "sqlite:///samudrika.db"
+
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
