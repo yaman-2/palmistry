@@ -20,6 +20,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const resetBtn = document.getElementById('resetBtn');
     const logoTitle = document.getElementById('logoTitle');
 
+    // Navigation
+    const navBar = document.getElementById('navBar');
+    const backBtn = document.getElementById('backBtn');
+    const homeBtn = document.getElementById('homeBtn');
+
     // Chat and Payment Elements
     const chatOptionBtn = document.getElementById('chatOptionBtn');
     const chatView = document.getElementById('chatView');
@@ -93,6 +98,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         chatView.classList.add('flex');
                         sessionStatusBar.classList.remove('hidden');
                     }
+                    
+                    // Show navbar if we are in results or chat view
+                    if (data.palm_reading || (data.chat_history && data.chat_history.length > 0)) {
+                        navBar.classList.remove('hidden');
+                    }
                 } else {
                     // Session invalid, clear it
                     localStorage.removeItem('samudrika_session_id');
@@ -109,6 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const showRegisterView = () => {
+        navBar.classList.add('hidden');
         registerView.classList.remove('hidden');
         registerView.classList.add('flex');
         mainView.classList.add('hidden');
@@ -211,6 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             
             // Switch views
+            navBar.classList.remove('hidden');
             mainView.classList.add('hidden');
             mainView.classList.remove('flex');
             
@@ -234,6 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Reset back to main view
     const resetApp = () => {
+        navBar.classList.add('hidden');
         clearInterval(timerInterval);
         sessionStatusBar.classList.add('hidden');
         chatView.classList.add('hidden');
@@ -256,6 +269,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     resetBtn.addEventListener('click', resetApp);
     logoTitle.addEventListener('click', resetApp);
+    homeBtn.addEventListener('click', resetApp);
+
+    backBtn.addEventListener('click', () => {
+        // If in chat view, go back to results view
+        if (!chatView.classList.contains('hidden')) {
+            chatView.classList.add('hidden');
+            chatView.classList.remove('flex');
+            sessionStatusBar.classList.add('hidden');
+            
+            resultsView.classList.remove('hidden');
+            resultsView.classList.add('flex');
+        } 
+        // If in results view, go back to main view (same as reset)
+        else if (!resultsView.classList.contains('hidden')) {
+            resetApp();
+        }
+    });
 
     // ==========================================
     // Chat & Payment Logic

@@ -181,6 +181,16 @@
     <!-- Mobile Device Mockup Container -->
     <div class="relative w-full max-w-[380px] h-[800px] rounded-[2.8rem] temple-border flex flex-col items-center justify-between py-10 px-5 overflow-hidden">
         
+        <!-- Navigation Bar (Hidden by default) -->
+        <div id="navBar" class="absolute top-4 left-0 w-full px-8 flex justify-between items-center z-50 hidden">
+            <button id="backBtn" class="text-[#d4a037] hover:text-[#ffba08] text-xs font-cinzel font-bold flex items-center gap-1 transition-colors drop-shadow-md bg-black/40 px-2 py-1 rounded-lg border border-[#d4a037]/30">
+                <span>◀</span> BACK
+            </button>
+            <button id="homeBtn" class="text-[#d4a037] hover:text-[#ffba08] text-xs font-cinzel font-bold flex items-center gap-1 transition-colors drop-shadow-md bg-black/40 px-2 py-1 rounded-lg border border-[#d4a037]/30">
+                HOME <span>🏠</span>
+            </button>
+        </div>
+
         <!-- Header -->
         <div class="text-center z-10 w-full mt-2">
             <h1 class="text-4xl font-cinzel font-extrabold text-gold-gradient tracking-widest cursor-pointer drop-shadow-lg" id="logoTitle">SAMUDRIKA</h1>
@@ -345,6 +355,6 @@
         
     </div>
 
-    <script src="script.js?v=11"></script>
+    <script src="script.js?v=12"></script>
 </body>
 </html>
