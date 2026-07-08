@@ -136,9 +136,9 @@ def get_gemini_client():
     wait=wait_exponential(multiplier=1, min=2, max=10),
     retry=retry_if_exception_type((requests.exceptions.Timeout, requests.exceptions.ConnectionError))
 )
-def call_gemini_llm(image_bytes: bytes) -> str:
+def call_gemini_llm(image_bytes: bytes, astrology_context: str = "") -> str:
     """
-    Calls Google Gemini 2.5 Flash with the image bytes and system prompt.
+    Calls Google Gemini 2.5 Flash with the image bytes, system prompt, and astrology context.
     Implements retry logic.
     """
     client = get_gemini_client()
@@ -152,9 +152,13 @@ def call_gemini_llm(image_bytes: bytes) -> str:
         logger.error(f"Failed to parse image bytes: {e}")
         raise ValueError(f"Invalid image format: {e}")
 
+    prompt = SYSTEM_PROMPT
+    if astrology_context:
+        prompt += f"\n\nAstrology Context of the User:\n{astrology_context}\n\nPlease explicitly mention their name and birth details in a welcoming, mystical opening sentence so they know the reading is highly personalized based on their birth chart!"
+
     response = client.models.generate_content(
         model='gemini-2.5-flash',
-        contents=[pil_image, SYSTEM_PROMPT]
+        contents=[pil_image, prompt]
     )
     return response.text.strip()
 
@@ -236,9 +240,21 @@ async def process_palm(
         else:
             image_bytes = fetch_image_from_url(image_url)
             
+        # 1.5. Fetch Astrology Context
+        astrology_context = ""
+        if session_id:
+            try:
+                db = SessionLocal()
+                session = db.query(ChatSession).filter(ChatSession.session_id == session_id).first()
+                if session and session.name:
+                    astrology_context = f"Name: {session.name}\nDate of Birth: {session.dob}\nTime of Birth: {session.tob}\nPlace of Birth: {session.pob}"
+                db.close()
+            except Exception as e:
+                logger.error(f"Failed to fetch session {session_id} for astrology context: {e}")
+            
         # 2. Call Gemini LLM with retry logic
         try:
-            llm_response = call_gemini_llm(image_bytes)
+            llm_response = call_gemini_llm(image_bytes, astrology_context)
         except Exception as e:
             logger.warning(f"Gemini call failed, using mock response. Error: {e}")
             import time
