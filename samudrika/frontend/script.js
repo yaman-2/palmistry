@@ -211,8 +211,43 @@ document.addEventListener('DOMContentLoaded', () => {
         spinner.style.display = 'block';
         scanBtn.disabled = true;
 
+        // Compress image to prevent Vercel 4.5MB Payload Limit
+        const compressImage = (imgFile) => {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(imgFile);
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        const MAX_SIZE = 1024;
+
+                        if (width > height && width > MAX_SIZE) {
+                            height = Math.round((height *= MAX_SIZE / width));
+                            width = MAX_SIZE;
+                        } else if (height > MAX_SIZE) {
+                            width = Math.round((width *= MAX_SIZE / height));
+                            height = MAX_SIZE;
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.7);
+                    };
+                };
+            });
+        };
+
+        const compressedBlob = await compressImage(file);
+        
         const formData = new FormData();
-        formData.append('image_file', file);
+        formData.append('image_file', compressedBlob, 'palm_scan.jpg');
         if (sessionId) {
             formData.append('session_id', sessionId);
         }
