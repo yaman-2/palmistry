@@ -262,7 +262,7 @@ async def process_palm(
             logger.warning(f"Gemini call failed, using mock response. Error: {e}")
             import time
             time.sleep(2)
-            llm_response = "✨ **Cosmic Reading (Mock Fallback)** ✨\n\nYour life line shows immense vitality and a strong connection to nature. The deep groove in your fate line suggests a major career breakthrough is approaching soon.\n\n*(Note: We couldn't connect to your Gemini API. Please check your GEMINI_API_KEY environment variable!)*"
+            llm_response = "✨ **Cosmic Reading (Testing Phase)** ✨\n\nOops! We are currently in our testing phase. We will fix this issue shortly and get back to you.\n\nIf you have paid, please be assured that your refund will be processed in 3-5 working days."
             
         # 4. Update session data if session_id is provided
         if session_id:
