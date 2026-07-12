@@ -4,7 +4,7 @@ requests
 python-multipart
 pydantic
 tenacity
-google-genai
+mistralai
 pillow
 sqlalchemy
 psycopg2-binary

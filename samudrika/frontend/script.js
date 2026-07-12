@@ -481,11 +481,8 @@ document.addEventListener('DOMContentLoaded', () => {
         chatWindow.appendChild(typingIndicator);
         scrollToBottom();
 
-        // Enforce a minimum 10-second processing delay to feel authentic
-        const minDelayPromise = new Promise(resolve => setTimeout(resolve, 10000));
-
         try {
-            const fetchPromise = fetch('/chat', {
+            const response = await fetch('/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -494,11 +491,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
             });
 
-            // Wait for both the 10s delay AND the API response
-            const [response] = await Promise.all([fetchPromise, minDelayPromise]);
-
             // Remove typing indicator
-            chatWindow.removeChild(typingIndicator);
+            if(chatWindow.contains(typingIndicator)) {
+                chatWindow.removeChild(typingIndicator);
+            }
 
             if (!response.ok) {
                 throw new Error('Cosmic line is busy.');
