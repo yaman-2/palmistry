@@ -220,7 +220,7 @@ def start_session(req: SessionStartRequest):
 # API Endpoint 1: Process Palm Image
 # -------------------------------------------------------------------
 @app.post("/process_palm")
-async def process_palm(
+def process_palm(
     background_tasks: BackgroundTasks,
     image_file: Optional[UploadFile] = File(None),
     image_url: Optional[str] = Form(None),
@@ -239,7 +239,7 @@ async def process_palm(
     try:
         # 1. Get image bytes
         if image_file:
-            image_bytes = await image_file.read()
+            image_bytes = image_file.file.read()
         else:
             image_bytes = fetch_image_from_url(image_url)
             
@@ -384,7 +384,7 @@ class ChatRequest(BaseModel):
     message: str
 
 @app.post("/chat")
-async def chat_endpoint(req: ChatRequest):
+def chat_endpoint(req: ChatRequest):
     # 1. Fetch current history and details from DB
     try:
         db = SessionLocal()

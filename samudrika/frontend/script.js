@@ -209,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
     imageInput.addEventListener('change', async (e) => {
         if (!e.target.files.length) return;
 
-        const file = e.target.files[0];
+        let file = e.target.files[0];
         if (!file.type.startsWith('image/')) {
             alert('Please select a valid image file.');
             return;
@@ -219,6 +219,19 @@ document.addEventListener('DOMContentLoaded', () => {
         scanBtnText.style.opacity = '0';
         spinner.style.display = 'block';
         scanBtn.disabled = true;
+
+        try {
+            // Convert HEIC to JPEG for iOS compatibility
+            if (file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')) {
+                const convertedBlob = await heic2any({ blob: file, toType: "image/jpeg" });
+                // heic2any might return an array of blobs if it's an image sequence, grab the first
+                const finalBlob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+                file = new File([finalBlob], "palm_scan.jpg", { type: "image/jpeg" });
+            }
+        } catch (err) {
+            console.error("HEIC conversion failed:", err);
+            // We'll proceed with original file; the compression failsafe will handle it.
+        }
 
         // Compress image with robust error handling and fallback
         const compressImage = (imgFile) => {
