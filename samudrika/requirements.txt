@@ -7,4 +7,3 @@ tenacity
 mistralai
 pillow
 sqlalchemy
-psycopg2-binary

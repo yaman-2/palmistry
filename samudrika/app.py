@@ -8,15 +8,18 @@ from datetime import datetime
 from typing import Optional
 
 env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env")
-if os.path.exists(env_path):
-    with open(env_path) as f:
-        for line in f:
-            if line.strip() and not line.startswith("#"):
-                try:
-                    key, val = line.strip().split("=", 1)
-                    os.environ[key] = val
-                except ValueError:
-                    pass
+try:
+    if os.path.exists(env_path):
+        with open(env_path) as f:
+            for line in f:
+                if line.strip() and not line.startswith("#"):
+                    try:
+                        key, val = line.strip().split("=", 1)
+                        os.environ[key] = val
+                    except ValueError:
+                        pass
+except Exception as e:
+    logging.warning(f"Skipping .env load: {e}")
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Request, BackgroundTasks
 from fastapi.staticfiles import StaticFiles
