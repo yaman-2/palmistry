@@ -220,36 +220,55 @@ document.addEventListener('DOMContentLoaded', () => {
         spinner.style.display = 'block';
         scanBtn.disabled = true;
 
-        // Compress image to prevent Vercel 4.5MB Payload Limit
+        // Compress image with robust error handling and fallback
         const compressImage = (imgFile) => {
             return new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(imgFile);
-                reader.onload = (event) => {
-                    const img = new Image();
-                    img.src = event.target.result;
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        let width = img.width;
-                        let height = img.height;
-                        const MAX_SIZE = 1024;
+                // Failsafe timeout: if compression takes >3s, return raw file
+                const timeout = setTimeout(() => resolve(imgFile), 3000);
+                
+                try {
+                    const reader = new FileReader();
+                    reader.onerror = () => { clearTimeout(timeout); resolve(imgFile); };
+                    reader.readAsDataURL(imgFile);
+                    reader.onload = (event) => {
+                        const img = new Image();
+                        img.onerror = () => { clearTimeout(timeout); resolve(imgFile); };
+                        img.onload = () => {
+                            try {
+                                const canvas = document.createElement('canvas');
+                                let width = img.width;
+                                let height = img.height;
+                                const MAX_SIZE = 1024;
 
-                        if (width > height && width > MAX_SIZE) {
-                            height = Math.round((height *= MAX_SIZE / width));
-                            width = MAX_SIZE;
-                        } else if (height > MAX_SIZE) {
-                            width = Math.round((width *= MAX_SIZE / height));
-                            height = MAX_SIZE;
-                        }
+                                if (width > height && width > MAX_SIZE) {
+                                    height = Math.round((height * MAX_SIZE) / width);
+                                    width = MAX_SIZE;
+                                } else if (height > MAX_SIZE) {
+                                    width = Math.round((width * MAX_SIZE) / height);
+                                    height = MAX_SIZE;
+                                }
 
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
+                                canvas.width = width;
+                                canvas.height = height;
+                                const ctx = canvas.getContext('2d');
+                                ctx.drawImage(img, 0, 0, width, height);
 
-                        canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.7);
+                                canvas.toBlob((blob) => {
+                                    clearTimeout(timeout);
+                                    if (blob) resolve(blob);
+                                    else resolve(imgFile);
+                                }, 'image/jpeg', 0.7);
+                            } catch (err) {
+                                clearTimeout(timeout);
+                                resolve(imgFile);
+                            }
+                        };
+                        img.src = event.target.result;
                     };
-                };
+                } catch (err) {
+                    clearTimeout(timeout);
+                    resolve(imgFile);
+                }
             });
         };
 
