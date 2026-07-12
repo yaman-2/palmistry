@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const regTob = document.getElementById('regTob');
     const regPob = document.getElementById('regPob');
     const submitRegBtn = document.getElementById('submitRegBtn');
+    const editDetailsBtn = document.getElementById('editDetailsBtn');
 
     const mainView = document.getElementById('mainView');
     const resultsView = document.getElementById('resultsView');
@@ -190,6 +191,14 @@ document.addEventListener('DOMContentLoaded', () => {
             submitRegBtn.innerText = 'Start Cosmic Journey';
         }
     });
+
+    // Edit Details Button
+    if(editDetailsBtn) {
+        editDetailsBtn.addEventListener('click', () => {
+            localStorage.removeItem('samudrika_session_id');
+            window.location.reload();
+        });
+    }
 
     // Trigger file picker when Scan button is clicked
     scanBtn.addEventListener('click', () => {
