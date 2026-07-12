@@ -114,7 +114,9 @@ def on_startup():
 # -------------------------------------------------------------------
 # Frontend & Static Files
 # -------------------------------------------------------------------
-app.mount("/assets", StaticFiles(directory=os.path.join(FRONTEND_DIR, "assets")), name="assets")
+assets_dir = os.path.join(FRONTEND_DIR, "assets")
+if os.path.isdir(assets_dir):
+    app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
 
 @app.get("/")
 def serve_frontend():
