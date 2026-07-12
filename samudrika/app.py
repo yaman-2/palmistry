@@ -261,8 +261,8 @@ def process_palm(
         except Exception as e:
             logger.warning(f"Gemini call failed, using mock response. Error: {e}")
             import time
-            time.sleep(2)
-            llm_response = "✨ **Cosmic Reading (Testing Phase)** ✨\n\nOops! We are currently in our testing phase. We will fix this issue shortly and get back to you.\n\nIf you have paid, please be assured that your refund will be processed in 3-5 working days."
+            time.sleep(1)
+            llm_response = f"✨ **Cosmic Reading (Testing Phase)** ✨\n\nOops! We are currently in our testing phase. We encountered an error: {str(e)}\n\nWe will fix this issue shortly and get back to you.\n\nIf you have paid, please be assured that your refund will be processed in 3-5 working days."
             
         # 4. Update session data if session_id is provided
         if session_id:
