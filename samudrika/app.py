@@ -7,20 +7,6 @@ import io
 from datetime import datetime
 from typing import Optional
 
-env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env")
-try:
-    if os.path.exists(env_path):
-        with open(env_path) as f:
-            for line in f:
-                if line.strip() and not line.startswith("#"):
-                    try:
-                        key, val = line.strip().split("=", 1)
-                        os.environ[key] = val
-                    except ValueError:
-                        pass
-except Exception as e:
-    logging.warning(f"Skipping .env load: {e}")
-
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Request, BackgroundTasks
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse, FileResponse
@@ -28,7 +14,7 @@ import requests
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 from pydantic import BaseModel
 from PIL import Image
-from mistralai import Mistral
+from google import genai
 
 from sqlalchemy import create_engine, Column, String
 from sqlalchemy.orm import declarative_base, sessionmaker
@@ -117,9 +103,7 @@ def on_startup():
 # -------------------------------------------------------------------
 # Frontend & Static Files
 # -------------------------------------------------------------------
-assets_dir = os.path.join(FRONTEND_DIR, "assets")
-if os.path.isdir(assets_dir):
-    app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+app.mount("/assets", StaticFiles(directory=os.path.join(FRONTEND_DIR, "assets")), name="assets")
 
 @app.get("/")
 def serve_frontend():
@@ -138,53 +122,46 @@ def serve_js():
 # -------------------------------------------------------------------
 import asyncio
 
-def get_mistral_client():
-    api_key = os.environ.get("MISTRAL_API_KEY")
+def get_gemini_client():
+    api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
         return None
     try:
-        return Mistral(api_key=api_key)
+        return genai.Client(api_key=api_key)
     except Exception as e:
-        logger.error(f"Failed to initialize Mistral Client: {e}")
+        logger.error(f"Failed to initialize Gemini Client: {e}")
         return None
 
 @retry(
     stop=stop_after_attempt(3), 
     wait=wait_exponential(multiplier=1, min=2, max=10),
-    retry=retry_if_exception_type((requests.exceptions.Timeout, requests.exceptions.ConnectionError, Exception))
+    retry=retry_if_exception_type((requests.exceptions.Timeout, requests.exceptions.ConnectionError))
 )
-async def call_mistral_llm(image_bytes: bytes, astrology_context: str = "") -> str:
+def call_gemini_llm(image_bytes: bytes, astrology_context: str = "") -> str:
     """
-    Calls Mistral Pixtral with the image bytes, system prompt, and astrology context.
+    Calls Google Gemini 2.5 Flash with the image bytes, system prompt, and astrology context.
     Implements retry logic.
     """
-    client = get_mistral_client()
+    client = get_gemini_client()
     if not client:
-        logger.warning("MISTRAL_API_KEY not found. Returning mock response.")
-        return "✨ **Cosmic Reading Successful! (Mock Demo)** ✨\n\nYour life line shows immense vitality and a strong connection to nature. The deep groove in your fate line suggests a major career breakthrough is approaching in the next 6 months.\n\nYour heart line reveals a deeply empathetic soul. The small cross near your Jupiter mount indicates spiritual protection.\n\n*(Note: To get live readings, please configure MISTRAL_API_KEY in your environment!)*"
+        logger.warning("GEMINI_API_KEY not found. Returning mock response.")
+        return "✨ **Cosmic Reading Successful! (Mock Demo)** ✨\n\nYour life line shows immense vitality and a strong connection to nature. The deep groove in your fate line suggests a major career breakthrough is approaching in the next 6 months.\n\nYour heart line reveals a deeply empathetic soul. The small cross near your Jupiter mount indicates spiritual protection.\n\n*(Note: To get live readings, please configure GEMINI_API_KEY in your environment!)*"
 
-    base64_image = base64.b64encode(image_bytes).decode('utf-8')
-    image_url = f"data:image/jpeg;base64,{base64_image}"
+    try:
+        pil_image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+    except Exception as e:
+        logger.error(f"Failed to parse image bytes: {e}")
+        raise ValueError(f"Invalid image format: {e}")
 
     prompt = SYSTEM_PROMPT
     if astrology_context:
         prompt += f"\n\nAstrology Context of the User:\n{astrology_context}\n\nPlease explicitly mention their name and birth details in a welcoming, mystical opening sentence so they know the reading is highly personalized based on their birth chart!"
 
-    response = await client.chat.complete_async(
-        model='pixtral-12b-2409',
-        messages=[
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": prompt},
-                    {"type": "image_url", "image_url": image_url}
-                ]
-            }
-        ],
-        temperature=0.1,
-        max_tokens=1000
+    response = client.models.generate_content(
+        model='gemini-2.5-flash',
+        contents=[pil_image, prompt]
     )
-    return response.choices[0].message.content.strip()
+    return response.text.strip()
 
 def fetch_image_from_url(url: str) -> bytes:
     """Downloads an image from a public URL."""
@@ -278,11 +255,11 @@ async def process_palm(
             except Exception as e:
                 logger.error(f"Failed to fetch session {session_id} for astrology context: {e}")
             
-        # 2. Call Mistral LLM with retry logic
+        # 2. Call Gemini LLM with retry logic
         try:
-            llm_response = await call_mistral_llm(image_bytes, astrology_context)
+            llm_response = call_gemini_llm(image_bytes, astrology_context)
         except Exception as e:
-            logger.warning(f"Mistral call failed, using mock response. Error: {e}")
+            logger.warning(f"Gemini call failed, using mock response. Error: {e}")
             import time
             time.sleep(2)
             llm_response = "✨ **Cosmic Reading (Testing Phase)** ✨\n\nOops! We are currently in our testing phase. We will fix this issue shortly and get back to you.\n\nIf you have paid, please be assured that your refund will be processed in 3-5 working days."
@@ -390,7 +367,7 @@ def process_whatsapp_image(media_id: str, phone_number: str):
         # image_bytes = media_response.content
         
         # Step 3: Call LLM
-        # llm_response = await call_mistral_llm(image_bytes)
+        # llm_response = call_gemini_llm(image_bytes)
         
         # Step 5: Log & Reply
         # log_request(req_id, phone_number, "SUCCESS", llm_response)
@@ -433,11 +410,11 @@ async def chat_endpoint(req: ChatRequest):
     except Exception:
         history = []
         
-    # 2. Call Mistral
-    client = get_mistral_client()
+    # 2. Call Gemini
+    client = get_gemini_client()
     if not client:
-        logger.warning("MISTRAL_API_KEY not configured. Returning fallback response.")
-        response_text = f"✨ **Pandit Ji (Mock Response)** ✨\n\nI can see in your lines that you are seeking answers, {name}. (Set MISTRAL_API_KEY in your environment for active AI responses!)"
+        logger.warning("GEMINI_API_KEY not configured. Returning fallback response.")
+        response_text = f"✨ **Pandit Ji (Mock Response)** ✨\n\nI can see in your lines that you are seeking answers, {name}. (Set GEMINI_API_KEY in your environment for active AI responses!)"
     else:
         system_prompt = (
             f"You are Pandit Ji, a premium Vedic Astrologer and Palmist. "
@@ -449,21 +426,20 @@ async def chat_endpoint(req: ChatRequest):
             f"Keep your answers concise, around 2-3 sentences, so it feels like a live chat conversation."
         )
         
-        messages = [{"role": "system", "content": system_prompt}]
+        contents = []
         for h in history:
-            role = "user" if h.get("role") == "user" else "assistant"
-            messages.append({"role": role, "content": h.get("text")})
+            role = "user" if h.get("role") == "user" else "model"
+            contents.append({"role": role, "parts": [{"text": h.get("text")}]})
         
-        messages.append({"role": "user", "content": req.message})
+        contents.append({"role": "user", "parts": [{"text": req.message}]})
         
         try:
-            response = await client.chat.complete_async(
-                model='mistral-small-latest',
-                messages=messages,
-                temperature=0.3,
-                max_tokens=250
+            response = client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=contents,
+                config={'system_instruction': system_prompt, 'temperature': 0.7}
             )
-            response_text = response.choices[0].message.content.strip()
+            response_text = response.text.strip()
         except Exception as e:
             logger.error(f"Chat error: {e}")
             error_msg = str(e)

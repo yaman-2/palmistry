@@ -1,7 +1,7 @@
 fastapi
 uvicorn
 pydantic
-mistralai
+google-genai
 pypdf
 pandas
 numpy

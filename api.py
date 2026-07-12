@@ -61,33 +61,33 @@ class LocalVideoBatchQueryRequest(BaseModel):
         }
 
 @app.post("/process_youtube", tags=["Option 1"])
-async def process_youtube_endpoint(req: YoutubeURLRequest):
+def process_youtube_endpoint(req: YoutubeURLRequest):
     """
     Extracts the transcript from a YouTube URL and saves it to the CSV database.
     (Does not download the video).
     """
-    result = await agent.process_youtube(req.url)
+    result = agent.process_youtube(req.url)
     if "error" in result:
         raise HTTPException(status_code=400, detail=result["error"])
     return result
 
 @app.post("/query_local_video", tags=["Option 2"])
-async def query_local_video_endpoint(req: LocalVideoQueryRequest):
+def query_local_video_endpoint(req: LocalVideoQueryRequest):
     """
     Searches the chunks for a matching timestamp, extracts a GIF from the local video path, 
     and gets an answer from Gemini Multimodal AI.
     """
-    result = await agent.query_local_video(req.query, req.video_path)
+    result = agent.query_local_video(req.query, req.video_path)
     if "error" in result:
         raise HTTPException(status_code=400, detail=result["error"])
     return result
 
 @app.post("/qa_local_ai", tags=["Option 3"])
-async def qa_local_ai_endpoint(req: QARequest):
+def qa_local_ai_endpoint(req: QARequest):
     """
     Searches the saved transcript data and generates an answer using local Llama 3 via Ollama.
     """
-    result = await agent.qa_open_source(req.query)
+    result = agent.qa_open_source(req.query)
     if "error" in result:
         raise HTTPException(status_code=400, detail=result["error"])
     return result
@@ -104,9 +104,9 @@ async def upload_document_qa_endpoint(
     """
     if file:
         file_bytes = await file.read()
-        result = await agent.qa_document(file_bytes, file.filename, query)
+        result = agent.qa_document(file_bytes, file.filename, query)
     elif text:
-        result = await agent.qa_text(text, query)
+        result = agent.qa_text(text, query)
     else:
         raise HTTPException(status_code=400, detail="Must provide either a file or raw text.")
         
@@ -115,7 +115,7 @@ async def upload_document_qa_endpoint(
     return result
 
 @app.post("/query_local_videos_batch", tags=["Option 5"])
-async def query_local_videos_batch_endpoint(req: LocalVideoBatchQueryRequest):
+def query_local_videos_batch_endpoint(req: LocalVideoBatchQueryRequest):
     """
     Provide a list of up to 50 video paths and run a single query across all of them.
     Returns a list of answers for each video.
@@ -123,7 +123,7 @@ async def query_local_videos_batch_endpoint(req: LocalVideoBatchQueryRequest):
     if len(req.video_paths) > 50:
         raise HTTPException(status_code=400, detail="Maximum of 50 video paths allowed.")
         
-    result = await agent.query_local_videos_batch(req.query, req.video_paths)
+    result = agent.query_local_videos_batch(req.query, req.video_paths)
     if "error" in result:
         raise HTTPException(status_code=400, detail=result["error"])
     return result
@@ -142,12 +142,12 @@ class VisualPalmRequest(BaseModel):
         }
 
 @app.post("/qa_palm_images", tags=["Option 6"])
-async def qa_palm_images_endpoint(req: VisualPalmRequest):
+def qa_palm_images_endpoint(req: VisualPalmRequest):
     """
     Provide a list of absolute paths to the user's hand images.
     The system will visually compare them to the local reference database and generate a palm reading using Gemini.
     """
-    result = await agent.qa_palm_images(req.image_paths)
+    result = agent.qa_palm_images(req.image_paths)
     if "error" in result:
         raise HTTPException(status_code=400, detail=result["error"])
     return result
@@ -178,7 +178,7 @@ class AstrologyChatRequest(BaseModel):
         }
 
 @app.post("/astrology_chat", tags=["Option 7"])
-async def astrology_chat_endpoint(req: AstrologyChatRequest):
+def astrology_chat_endpoint(req: AstrologyChatRequest):
     """
     Takes user birth profile details, current question, and chat history.
     Uses Gemini to extract relevant reference details from local PDFs and answers user queries.
@@ -189,7 +189,7 @@ async def astrology_chat_endpoint(req: AstrologyChatRequest):
         "time": req.time,
         "place": req.place
     }
-    result = await agent.qa_astrology(user_info, req.query, req.history)
+    result = agent.qa_astrology(user_info, req.query, req.history)
     if "error" in result:
         raise HTTPException(status_code=400, detail=result["error"])
     return result
@@ -250,11 +250,11 @@ def list_documents_endpoint():
     return agent.get_all_documents()
 
 @app.post("/document_chat", tags=["Option 8"])
-async def document_chat_endpoint(req: DocumentChatRequest):
+def document_chat_endpoint(req: DocumentChatRequest):
     """
     Interact with multiple uploaded PDF documents simultaneously using your Gemini API key and RAG.
     """
-    result = await agent.qa_uploaded_documents(req.document_ids, req.query, req.history)
+    result = agent.qa_uploaded_documents(req.document_ids, req.query, req.history)
     if "error" in result:
         raise HTTPException(status_code=400, detail=result["error"])
     return result

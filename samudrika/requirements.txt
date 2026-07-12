@@ -4,6 +4,6 @@ requests
 python-multipart
 pydantic
 tenacity
-mistralai
+google-genai
 pillow
 sqlalchemy

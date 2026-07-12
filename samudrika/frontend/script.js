@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const scanBtnText = document.getElementById('scanBtnText');
     const spinner = document.getElementById('spinner');
     const imageInput = document.getElementById('imageInput');
-    
+
     const registerView = document.getElementById('registerView');
     const regName = document.getElementById('regName');
     const regEmail = document.getElementById('regEmail');
@@ -48,9 +48,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedPack = 51; // 51 or 21
     let chatHistory = [];
     let isFreeTrialUsed = false;
-    
+
     let sessionId = localStorage.getItem('samudrika_session_id') || null;
-    
+
     // Check for clear_cache parameter
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('clear_cache') === '1') {
@@ -66,31 +66,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 const res = await fetch(`/session/${sessionId}`);
                 if (res.ok) {
                     const data = await res.json();
-                    
+
                     // Hide register view
                     registerView.classList.add('hidden');
                     registerView.classList.remove('flex');
-                    
+
                     // If palm reading exists, go straight to results view
                     if (data.palm_reading) {
                         mainView.classList.add('hidden');
                         mainView.classList.remove('flex');
-                        
+
                         resultsView.classList.remove('hidden');
                         resultsView.classList.add('flex');
-                        
+
                         readingContent.innerHTML = data.palm_reading.replace(/\n/g, '<br><br>');
                     } else {
                         mainView.classList.remove('hidden');
                         mainView.classList.add('flex');
                     }
-                    
+
                     // If chat history exists, restore it
                     if (data.chat_history && data.chat_history.length > 0) {
                         chatHistory = data.chat_history;
                         // Clear default system message if history exists
-                        chatWindow.innerHTML = ''; 
-                        
+                        chatWindow.innerHTML = '';
+
                         chatHistory.forEach(msg => {
                             if (msg.role === 'user') {
                                 appendUserMessage(msg.text);
@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 appendAstroMessage(msg.text);
                             }
                         });
-                        
+
                         // If chat was active, go straight to chat view
                         resultsView.classList.add('hidden');
                         resultsView.classList.remove('flex');
@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         chatView.classList.add('flex');
                         sessionStatusBar.classList.remove('hidden');
                     }
-                    
+
                     // Show navbar if we are in results or chat view
                     if (data.palm_reading || (data.chat_history && data.chat_history.length > 0)) {
                         navBar.classList.remove('hidden');
@@ -199,7 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Handle file selection and API call for Palm Scan
     imageInput.addEventListener('change', async (e) => {
         if (!e.target.files.length) return;
-        
+
         const file = e.target.files[0];
         if (!file.type.startsWith('image/')) {
             alert('Please select a valid image file.');
@@ -245,7 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         const compressedBlob = await compressImage(file);
-        
+
         const formData = new FormData();
         formData.append('image_file', compressedBlob, 'palm_scan.jpg');
         if (sessionId) {
@@ -264,18 +264,18 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const data = await response.json();
-            
+
             // Switch views
             navBar.classList.remove('hidden');
             mainView.classList.add('hidden');
             mainView.classList.remove('flex');
-            
+
             resultsView.classList.remove('hidden');
             resultsView.classList.add('flex');
-            
+
             // Format and display reading
             readingContent.innerHTML = data.reading.replace(/\n/g, '<br><br>');
-            
+
         } catch (error) {
             alert('Cosmic Connection Failed: ' + error.message);
         } finally {
@@ -297,10 +297,10 @@ document.addEventListener('DOMContentLoaded', () => {
         chatView.classList.remove('flex');
         resultsView.classList.add('hidden');
         resultsView.classList.remove('flex');
-        
+
         mainView.classList.remove('hidden');
         mainView.classList.add('flex');
-        
+
         readingContent.innerHTML = '';
         chatWindow.innerHTML = `
             <div class="chat-msg system bg-yellow-600/10 border border-yellow-600/20 rounded-xl p-3 text-xs text-yellow-500 text-center">
@@ -321,10 +321,10 @@ document.addEventListener('DOMContentLoaded', () => {
             chatView.classList.add('hidden');
             chatView.classList.remove('flex');
             sessionStatusBar.classList.add('hidden');
-            
+
             resultsView.classList.remove('hidden');
             resultsView.classList.add('flex');
-        } 
+        }
         // If in results view, go back to main view (same as reset)
         else if (!resultsView.classList.contains('hidden')) {
             resetApp();
@@ -341,9 +341,9 @@ document.addEventListener('DOMContentLoaded', () => {
         resultsView.classList.remove('flex');
         chatView.classList.remove('hidden');
         chatView.classList.add('flex');
-        
+
         sessionStatusBar.classList.remove('hidden');
-        
+
         if (!isFreeTrialUsed && timeRemaining <= 0) {
             appendSystemMessage("🎁 1-Minute Free Trial activated! Ask Pandit Ji anything.");
             startCountdown(60);
@@ -385,10 +385,10 @@ document.addEventListener('DOMContentLoaded', () => {
         chatInput.disabled = false;
         chatInput.placeholder = "Ask Pandit Ji...";
         sendChatBtn.disabled = false;
-        
+
         const secondsToAdd = selectedPack === 51 ? 300 : 120;
         const minutes = selectedPack === 51 ? 5 : 2;
-        
+
         appendSystemMessage(`💸 Payment of ₹${selectedPack} Successful! Added ${minutes} minutes to your session.`);
         startCountdown(timeRemaining + secondsToAdd);
     });
@@ -427,9 +427,9 @@ document.addEventListener('DOMContentLoaded', () => {
         chatInput.disabled = true;
         chatInput.placeholder = "Session expired. Refill time to ask...";
         sendChatBtn.disabled = true;
-        
+
         appendSystemMessage("⚠️ Your chat session has expired. Please select a package below to continue chatting.");
-        
+
         // Show payment modal
         paymentModal.classList.remove('hidden');
     };
@@ -481,8 +481,11 @@ document.addEventListener('DOMContentLoaded', () => {
         chatWindow.appendChild(typingIndicator);
         scrollToBottom();
 
+        // Enforce a minimum 10-second processing delay to feel authentic
+        const minDelayPromise = new Promise(resolve => setTimeout(resolve, 10000));
+
         try {
-            const response = await fetch('/chat', {
+            const fetchPromise = fetch('/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -491,10 +494,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
             });
 
+            // Wait for both the 10s delay AND the API response
+            const [response] = await Promise.all([fetchPromise, minDelayPromise]);
+
             // Remove typing indicator
-            if(chatWindow.contains(typingIndicator)) {
-                chatWindow.removeChild(typingIndicator);
-            }
+            chatWindow.removeChild(typingIndicator);
 
             if (!response.ok) {
                 throw new Error('Cosmic line is busy.');

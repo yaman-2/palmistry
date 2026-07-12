@@ -18,8 +18,7 @@ import numpy as np
 import cv2
 import requests
 from PIL import Image
-from mistralai import Mistral
-import base64
+from google import genai
 from youtube_transcript_api import YouTubeTranscriptApi
 from yt_dlp import YoutubeDL
 from sentence_transformers import SentenceTransformer
@@ -35,12 +34,12 @@ ASTRO_CSV_FILE = os.path.join(DATA_DIR, "astrologylinkdata.csv")
 # ==========================================
 # Common Helpers
 # ==========================================
-def get_mistral_client():
-    api_key = os.environ.get("MISTRAL_API_KEY")
+def get_gemini_client():
+    api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
         return None
     try:
-        return Mistral(api_key=api_key)
+        return genai.Client(api_key=api_key)
     except Exception as e:
         return None
 
@@ -109,11 +108,11 @@ def get_transcript(video_id):
     except Exception as e:
         return None
 
-async def correct_transcript(text, language="English"):
+def correct_transcript(text, language="English"):
     if not text or not text.strip():
         return text
     
-    client = get_mistral_client()
+    client = get_gemini_client()
     if not client:
         return text
         
@@ -125,19 +124,16 @@ async def correct_transcript(text, language="English"):
     )
     
     try:
-        response = await client.chat.complete_async(
-            model='mistral-large-latest',
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": text}
-            ],
-            temperature=0.1
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=text,
+            config={'system_instruction': system_prompt, 'temperature': 0.1}
         )
-        return response.choices[0].message.content.strip()
+        return response.text.strip()
     except Exception as e:
         return text
 
-async def process_youtube(url):
+def process_youtube(url):
     try:
         video_id = get_video_id(url)
     except ValueError as e:
@@ -159,9 +155,9 @@ async def process_youtube(url):
     hi_transcript = transcripts['hi']
 
     if en_transcript:
-        en_transcript = await correct_transcript(en_transcript, "English")
+        en_transcript = correct_transcript(en_transcript, "English")
     if hi_transcript:
-        hi_transcript = await correct_transcript(hi_transcript, "Hindi")
+        hi_transcript = correct_transcript(hi_transcript, "Hindi")
 
     new_data = {
         'URL': [url],
@@ -228,13 +224,13 @@ def extract_frames_from_local(video_path, start_time, end_time, max_frames=8):
     cap.release()
     return frames
 
-async def query_local_video(query, video_path):
+def query_local_video(query, video_path):
     if not os.path.exists(video_path):
         return {"error": "Video file not found!"}
 
-    client = get_mistral_client()
+    client = get_gemini_client()
     if not client:
-        return {"error": "MISTRAL_API_KEY environment variable not set."}
+        return {"error": "GEMINI_API_KEY environment variable not set."}
 
     best_chunk, err = find_best_chunk(query)
     if err:
@@ -244,7 +240,7 @@ async def query_local_video(query, video_path):
     end_time = float(best_chunk['End_Time'])
     chunk_text = best_chunk['Text']
     
-    chunk_text = await correct_transcript(chunk_text, "Hindi or English")
+    chunk_text = correct_transcript(chunk_text, "Hindi or English")
     
     frames = extract_frames_from_local(video_path, start_time, end_time, max_frames=10)
     gif_path = os.path.join(DATA_DIR, "output.gif")
@@ -258,42 +254,31 @@ async def query_local_video(query, video_path):
         "If the question cannot be answered using the provided context, you MUST refuse to answer and say exactly: 'Main sirf is video ke context se hi answer de sakta hu.' "
         "Do not use your general knowledge."
     )
-    prompt_text = (
-        f"The user's question is: '{query}'\n"
-        f"Here is the spoken transcript for this segment:\n\"{chunk_text}\"\n"
+    prompt = [
+        f"The user's question is: '{query}'",
+        f"Here is the spoken transcript for this segment:\n\"{chunk_text}\"",
         "I have also provided a sequence of frames from this exact segment."
-    )
-    
-    content = [{"type": "text", "text": prompt_text}]
-    import io
-    for frame in frames:
-        buffered = io.BytesIO()
-        frame.save(buffered, format="JPEG")
-        img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
-        content.append({"type": "image_url", "image_url": f"data:image/jpeg;base64,{img_str}"})
+    ]
     
     try:
-        response = await client.chat.complete_async(
-            model='pixtral-12b-2409',
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": content}
-            ],
-            temperature=0.0
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt + frames,
+            config={'system_instruction': system_prompt, 'temperature': 0.0}
         )
         return {
             "success": True, 
-            "answer": response.choices[0].message.content, 
+            "answer": response.text, 
             "context_preview": chunk_text[:200],
             "gif_saved_at": gif_path if frames else None
         }
     except Exception as e:
-        return {"error": f"Error querying Mistral: {str(e)}"}
+        return {"error": f"Error querying Gemini: {str(e)}"}
 
-async def query_local_videos_batch(query, video_paths):
-    client = get_mistral_client()
+def query_local_videos_batch(query, video_paths):
+    client = get_gemini_client()
     if not client:
-        return {"error": "MISTRAL_API_KEY environment variable not set."}
+        return {"error": "GEMINI_API_KEY environment variable not set."}
 
     best_chunk, err = find_best_chunk(query)
     if err:
@@ -303,7 +288,7 @@ async def query_local_videos_batch(query, video_paths):
     end_time = float(best_chunk['End_Time'])
     chunk_text = best_chunk['Text']
     
-    chunk_text = await correct_transcript(chunk_text, "Hindi or English")
+    chunk_text = correct_transcript(chunk_text, "Hindi or English")
     
     system_prompt = (
         "You are a strict AI assistant analyzing a specific segment of a video. "
@@ -324,36 +309,26 @@ async def query_local_videos_batch(query, video_paths):
         if frames:
             frames[0].save(gif_path, save_all=True, append_images=frames[1:], duration=300, loop=0)
         
-        prompt_text = (
-            f"The user's question is: '{query}'\n"
-            f"Here is the spoken transcript for this segment:\n\"{chunk_text}\"\n"
+        prompt = [
+            f"The user's question is: '{query}'",
+            f"Here is the spoken transcript for this segment:\n\"{chunk_text}\"",
             "I have also provided a sequence of frames from this exact segment."
-        )
-        content = [{"type": "text", "text": prompt_text}]
-        import io
-        for frame in frames:
-            buffered = io.BytesIO()
-            frame.save(buffered, format="JPEG")
-            img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
-            content.append({"type": "image_url", "image_url": f"data:image/jpeg;base64,{img_str}"})
+        ]
         
         try:
-            response = await client.chat.complete_async(
-                model='pixtral-12b-2409',
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": content}
-                ],
-                temperature=0.0
+            response = client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=prompt + frames,
+                config={'system_instruction': system_prompt, 'temperature': 0.0}
             )
             results.append({
                 "video": path,
                 "success": True, 
-                "answer": response.choices[0].message.content, 
+                "answer": response.text, 
                 "gif_saved_at": gif_path if frames else None
             })
         except Exception as e:
-            results.append({"video": path, "error": f"Error querying Mistral: {str(e)}"})
+            results.append({"video": path, "error": f"Error querying Gemini: {str(e)}"})
             
     return {
         "success": True, 
@@ -364,7 +339,7 @@ async def query_local_videos_batch(query, video_paths):
 # ==========================================
 # Core Logic: Option 3
 # ==========================================
-async def qa_open_source(query):
+def qa_open_source(query):
     if not os.path.exists(ASTRO_CSV_FILE):
         return {"error": f"{ASTRO_CSV_FILE} not found."}
         
@@ -409,38 +384,36 @@ async def qa_open_source(query):
     )
     user_prompt = f"Context:\n{context}\n\nQuestion: {query}\n"
     
-    client = get_mistral_client()
+    # Use Gemini API instead of local Ollama
+    client = get_gemini_client()
     if not client:
-        return {"error": "MISTRAL_API_KEY environment variable not set in .env."}
+        return {"error": "GEMINI_API_KEY environment variable not set in .env."}
         
-    import asyncio
+    import time
     for attempt in range(3):
         try:
-            response = await client.chat.complete_async(
-                model='mistral-large-latest',
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
-                temperature=0.0
+            response = client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=[user_prompt],
+                config={'system_instruction': system_prompt, 'temperature': 0.0}
             )
             return {
                 "success": True, 
-                "answer": response.choices[0].message.content,
+                "answer": response.text,
                 "context_preview": context[:200]
             }
         except Exception as e:
             if attempt == 2:
-                return {"error": f"Error querying Mistral: {str(e)}"}
-            print(f"Mistral API attempt {attempt+1} failed: {e}. Retrying in 3 seconds...")
-            await asyncio.sleep(3)
+                return {"error": f"Error querying Gemini: {str(e)}"}
+            print(f"Gemini API attempt {attempt+1} failed: {e}. Retrying in 3 seconds...")
+            time.sleep(3)
 
 
 # ==========================================
 # Core Logic: Option 4 (Document Q&A)
 # ==========================================
 import io
-async def qa_document(file_bytes, filename, query):
+def qa_document(file_bytes, filename, query):
     text_content = ""
     
     # 1. Parse File
@@ -462,9 +435,9 @@ async def qa_document(file_bytes, filename, query):
     if not text_content.strip():
         return {"error": "The document is empty or text could not be extracted."}
         
-    return await qa_text(text_content, query)
+    return qa_text(text_content, query)
 
-async def qa_text(text_content, query):
+def qa_text(text_content, query):
     if not text_content.strip():
         return {"error": "The provided text is empty."}
 
@@ -488,6 +461,7 @@ async def qa_text(text_content, query):
     for idx in top_indices:
         context += f"Document Snippet: {all_chunks[idx]}\n\n"
         
+    # 3. Ask Ollama (Llama 3)
     system_prompt = (
         "You are a strict AI assistant. Your ONLY job is to answer the user's question based strictly on the provided Document Context.\n"
         "IMPORTANT RULES:\n"
@@ -497,31 +471,29 @@ async def qa_text(text_content, query):
     )
     user_prompt = f"Document Context:\n{context}\n\nQuestion: {query}\n"
     
-    client = get_mistral_client()
+    # Use Gemini API instead of local Ollama
+    client = get_gemini_client()
     if not client:
-        return {"error": "MISTRAL_API_KEY environment variable not set in .env."}
+        return {"error": "GEMINI_API_KEY environment variable not set in .env."}
         
-    import asyncio
+    import time
     for attempt in range(3):
         try:
-            response = await client.chat.complete_async(
-                model='mistral-large-latest',
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
-                temperature=0.0
+            response = client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=[user_prompt],
+                config={'system_instruction': system_prompt, 'temperature': 0.0}
             )
             return {
                 "success": True, 
-                "answer": response.choices[0].message.content,
+                "answer": response.text,
                 "context_preview": context[:200]
             }
         except Exception as e:
             if attempt == 2:
-                return {"error": f"Error querying Mistral: {str(e)}"}
-            print(f"Mistral API attempt {attempt+1} failed: {e}. Retrying in 3 seconds...")
-            await asyncio.sleep(3)
+                return {"error": f"Error querying Gemini: {str(e)}"}
+            print(f"Gemini API attempt {attempt+1} failed: {e}. Retrying in 3 seconds...")
+            time.sleep(3)
 
 # ==========================================
 # Core Logic: Option 6 (Visual Palm Reading)
@@ -557,10 +529,10 @@ def load_reference_data():
         
     return {"images": reference_images, "contexts": contexts}, None
 
-async def qa_palm_images(user_image_paths):
-    client = get_mistral_client()
+def qa_palm_images(user_image_paths):
+    client = get_gemini_client()
     if not client:
-        return {"error": "MISTRAL_API_KEY environment variable not set."}
+        return {"error": "GEMINI_API_KEY environment variable not set."}
         
     ref_data, err = load_reference_data()
     if err:
@@ -593,32 +565,24 @@ async def qa_palm_images(user_image_paths):
         "Your task is to analyze the provided images carefully and generate a comprehensive, accurate palm reading, incorporating the insights from the provided context."
     )
     
-    prompt_text = "Here is the retrieved context based on visual patterns matched in the user's hands:\n" + combined_context + "\nHere are the user's hand images. Please provide a detailed palm reading based on these patterns."
-    
-    content = [{"type": "text", "text": prompt_text}]
-    import io
-    for img in user_images:
-        buffered = io.BytesIO()
-        img.save(buffered, format="JPEG")
-        img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
-        content.append({"type": "image_url", "image_url": f"data:image/jpeg;base64,{img_str}"})
+    prompt = [
+        "Here is the retrieved context based on visual patterns matched in the user's hands:\n" + combined_context,
+        "\nHere are the user's hand images. Please provide a detailed palm reading based on these patterns."
+    ]
     
     try:
-        response = await client.chat.complete_async(
-            model='pixtral-12b-2409',
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": content}
-            ],
-            temperature=0.2
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt + user_images,
+            config={'system_instruction': system_prompt, 'temperature': 0.2}
         )
         return {
             "success": True, 
-            "answer": response.choices[0].message.content, 
+            "answer": response.text, 
             "matched_context": combined_context
         }
     except Exception as e:
-        return {"error": f"Error querying Mistral: {str(e)}"}
+        return {"error": f"Error querying Gemini: {str(e)}"}
 
 
 # ==========================================
@@ -731,10 +695,10 @@ def get_astrology_context(query, max_chunks=3):
         print(f"Error doing semantic search: {e}")
         return all_text[:2000]
 
-async def qa_astrology(user_info, query, history):
-    client = get_mistral_client()
+def qa_astrology(user_info, query, history):
+    client = get_gemini_client()
     if not client:
-        return {"error": "MISTRAL_API_KEY environment variable not set."}
+        return {"error": "GEMINI_API_KEY environment variable not set."}
         
     context = get_astrology_context(query)
     
@@ -758,36 +722,36 @@ async def qa_astrology(user_info, query, history):
         "- Speak directly to the client (e.g., 'Your chart indicates...')."
     )
     
-    messages = [{"role": "system", "content": system_prompt}]
+    formatted_contents = []
     for msg in history:
-        role = "user" if msg["role"] == "user" else "assistant"
-        messages.append({
+        role = "user" if msg["role"] == "user" else "model"
+        formatted_contents.append({
             "role": role,
-            "content": msg["content"]
+            "parts": [{"text": msg["content"]}]
         })
         
-    messages.append({
+    formatted_contents.append({
         "role": "user",
-        "content": query
+        "parts": [{"text": query}]
     })
     
-    import asyncio
+    import time
     for attempt in range(3):
         try:
-            response = await client.chat.complete_async(
-                model='mistral-large-latest',
-                messages=messages,
-                temperature=0.7
+            response = client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=formatted_contents,
+                config={'system_instruction': system_prompt, 'temperature': 0.7}
             )
             return {
                 "success": True,
-                "response": response.choices[0].message.content
+                "response": response.text
             }
         except Exception as e:
             if attempt == 2:
-                return {"error": f"Error querying Mistral: {str(e)}"}
-            print(f"Mistral API attempt {attempt+1} failed: {e}. Retrying in 3 seconds...")
-            await asyncio.sleep(3)
+                return {"error": f"Error querying Gemini: {str(e)}"}
+            print(f"Gemini API attempt {attempt+1} failed: {e}. Retrying in 3 seconds...")
+            time.sleep(3)
 
 def extract_text_from_bytes(file_bytes):
     text_content = ""
@@ -802,10 +766,10 @@ def extract_text_from_bytes(file_bytes):
         print(f"Error reading PDF from bytes: {e}")
     return text_content
 
-async def qa_uploaded_documents(document_ids, query, history):
-    client = get_mistral_client()
+def qa_uploaded_documents(document_ids, query, history):
+    client = get_gemini_client()
     if not client:
-        return {"error": "MISTRAL_API_KEY environment variable not set."}
+        return {"error": "GEMINI_API_KEY environment variable not set."}
         
     # Get filenames mappings from DB to print pretty sources
     filename_map = {}
@@ -880,36 +844,36 @@ async def qa_uploaded_documents(document_ids, query, history):
         
     system_prompt += "Guidelines:\n- Be precise, direct, and reference the specific source filename where applicable (e.g. 'According to foundations.pdf...')."
     
-    messages = [{"role": "system", "content": system_prompt}]
+    formatted_contents = []
     for msg in history:
-        role = "user" if msg["role"] == "user" else "assistant"
-        messages.append({
+        role = "user" if msg["role"] == "user" else "model"
+        formatted_contents.append({
             "role": role,
-            "content": msg["content"]
+            "parts": [{"text": msg["content"]}]
         })
         
-    messages.append({
+    formatted_contents.append({
         "role": "user",
-        "content": query
+        "parts": [{"text": query}]
     })
     
-    import asyncio
+    import time
     for attempt in range(3):
         try:
-            response = await client.chat.complete_async(
-                model='mistral-large-latest',
-                messages=messages,
-                temperature=0.2
+            response = client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=formatted_contents,
+                config={'system_instruction': system_prompt, 'temperature': 0.2}
             )
             return {
                 "success": True,
-                "response": response.choices[0].message.content
+                "response": response.text
             }
         except Exception as e:
             if attempt == 2:
-                return {"error": f"Error querying Mistral: {str(e)}"}
-            print(f"Mistral API attempt {attempt+1} failed: {e}. Retrying in 3 seconds...")
-            await asyncio.sleep(3)
+                return {"error": f"Error querying Gemini: {str(e)}"}
+            print(f"Gemini API attempt {attempt+1} failed: {e}. Retrying in 3 seconds...")
+            time.sleep(3)
 
 # ==========================================
 # Persistent Document Chat SQLite DB
