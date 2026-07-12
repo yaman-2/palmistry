@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "samudrika/app.py",
+      "use": "@vercel/python",
+      "config": {
+        "includeFiles": "samudrika/frontend/**"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "samudrika/app.py"
+    }
+  ]
+}
